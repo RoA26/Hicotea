@@ -15,6 +15,8 @@ export default function Registro() {
         nombre_usuario: String(f.get('nombre_usuario')),
         nombre_completo: String(f.get('nombre_completo')),
         contrasena: String(f.get('contrasena')),
+        confirmacion_contrasena: String(f.get('confirmacion_contrasena')),
+        codigo_invitacion: String(f.get('codigo_invitacion')),
       })
       navegar('/inicio')
     } catch (err) {
@@ -39,6 +41,17 @@ export default function Registro() {
         <p>
           <label>
             Contraseña <input name="contrasena" type="password" autoComplete="new-password" minLength={8} required />
+          </label>
+        </p>
+        <p>
+          <label>
+            Repite la contraseña{' '}
+            <input name="confirmacion_contrasena" type="password" autoComplete="new-password" minLength={8} required />
+          </label>
+        </p>
+        <p>
+          <label>
+            Código de invitación <input name="codigo_invitacion" autoComplete="off" required />
           </label>
         </p>
         {error && <p role="alert">{error}</p>}

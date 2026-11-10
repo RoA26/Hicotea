@@ -12,6 +12,15 @@ def motor() -> Engine:
 
 
 def conexion() -> Iterator[Connection]:
-    """Dependencia: una transacción por petición; commit si no hubo excepción."""
-    with motor().begin() as con:
-        yield con
+    """Dependencia: una transacción por petición. Commit si no hubo excepción,
+    rollback si la hubo. Un servicio puede hacer `con.commit()` antes de lanzar
+    un error cuando necesita que algo quede guardado igual (p. ej. un intento
+    fallido de PIN)."""
+    with motor().connect() as con:
+        try:
+            yield con
+        except BaseException:
+            con.rollback()
+            raise
+        else:
+            con.commit()

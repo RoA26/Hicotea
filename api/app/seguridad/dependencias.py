@@ -21,3 +21,10 @@ def usuario_actual(request: Request, con: Con) -> dict:
 
 
 UsuarioActual = Annotated[dict, Depends(usuario_actual)]
+
+
+def id_usuario_actual(usuario: UsuarioActual) -> int:
+    return usuario["id"]
+
+
+IdUsuario = Annotated[int, Depends(id_usuario_actual)]

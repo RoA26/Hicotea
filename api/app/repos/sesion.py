@@ -33,3 +33,7 @@ def borrar_vencidas(con: Connection, id_usuario: int) -> None:
     con.execute(
         text("DELETE FROM sesion WHERE id_usuario = :u AND expira_en <= now()"), {"u": id_usuario}
     )
+
+
+def borrar_todas(con: Connection, id_usuario: int) -> None:
+    con.execute(text("DELETE FROM sesion WHERE id_usuario = :u"), {"u": id_usuario})

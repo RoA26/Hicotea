@@ -1,0 +1,88 @@
+"""Frena los ataques de fuerza bruta contra el inicio de sesión.
+
+Dos contadores en memoria:
+ - por IP + usuario: 5 fallos en 15 minutos bloquean esa combinación 15 minutos;
+ - por IP: 20 fallos (cualquier usuario) bloquean esa IP 15 minutos.
+Bloquear por IP + usuario, y no solo por usuario, evita que un extraño deje
+por fuera al titular de la cuenta escribiendo mal su clave.
+
+Al estar en memoria, un reinicio limpia los contadores; para una app de una
+sola instancia es suficiente."""
+
+import threading
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+
+MAXIMO_POR_USUARIO_E_IP = 5
+MAXIMO_POR_IP = 20
+VENTANA = 15 * 60
+BLOQUEO = 15 * 60
+LIMITE_REGISTROS_ANTES_DE_LIMPIAR = 10_000
+
+
+@dataclass
+class _Registro:
+    fallos: int
+    inicio_ventana: float
+    bloqueado_hasta: float | None
+
+
+class LimitadorIntentosLogin:
+    def __init__(self, reloj: Callable[[], float] = time.monotonic):
+        self._reloj = reloj
+        self._registros: dict[str, _Registro] = {}
+        self._candado = threading.Lock()
+
+    def esta_bloqueado(self, ip: str, usuario: str) -> bool:
+        ahora = self._reloj()
+        with self._candado:
+            return self._bloqueado(_clave_usuario(ip, usuario), ahora) or self._bloqueado(_clave_ip(ip), ahora)
+
+    def registrar_fallo(self, ip: str, usuario: str) -> None:
+        ahora = self._reloj()
+        with self._candado:
+            self._limpiar_si_hace_falta(ahora)
+            self._sumar_fallo(_clave_usuario(ip, usuario), MAXIMO_POR_USUARIO_E_IP, ahora)
+            self._sumar_fallo(_clave_ip(ip), MAXIMO_POR_IP, ahora)
+
+    def registrar_exito(self, ip: str, usuario: str) -> None:
+        """Un inicio de sesión correcto borra los fallos de esa combinación IP + usuario."""
+        with self._candado:
+            self._registros.pop(_clave_usuario(ip, usuario), None)
+
+    def reiniciar(self) -> None:
+        with self._candado:
+            self._registros.clear()
+
+    def _bloqueado(self, clave: str, ahora: float) -> bool:
+        r = self._registros.get(clave)
+        return r is not None and r.bloqueado_hasta is not None and ahora < r.bloqueado_hasta
+
+    def _sumar_fallo(self, clave: str, maximo: int, ahora: float) -> None:
+        actual = self._registros.get(clave)
+        vencida = actual is None or ahora > actual.inicio_ventana + VENTANA
+        fallos = 1 if vencida else actual.fallos + 1
+        inicio = ahora if vencida else actual.inicio_ventana
+        bloqueo = ahora + BLOQUEO if fallos >= maximo else (None if actual is None else actual.bloqueado_hasta)
+        self._registros[clave] = _Registro(fallos, inicio, bloqueo)
+
+    def _limpiar_si_hace_falta(self, ahora: float) -> None:
+        """Evita que la memoria crezca sin límite si llegan muchas IP distintas."""
+        if len(self._registros) < LIMITE_REGISTROS_ANTES_DE_LIMPIAR:
+            return
+        self._registros = {
+            k: r for k, r in self._registros.items()
+            if not (ahora > r.inicio_ventana + VENTANA and (r.bloqueado_hasta is None or ahora > r.bloqueado_hasta))
+        }
+
+
+def _clave_usuario(ip: str, usuario: str) -> str:
+    return f"u|{ip}|{usuario}"
+
+
+def _clave_ip(ip: str) -> str:
+    return f"ip|{ip}"
+
+
+limitador = LimitadorIntentosLogin()

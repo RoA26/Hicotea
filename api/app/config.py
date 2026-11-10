@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,6 +8,9 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HICOTEA_", env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://hicotea:hicotea@localhost:5432/hicotea"
+
+    # Obligatorio: sin él la app no arranca. Se pide al registrarse (cuentas solo por invitación).
+    codigo_invitacion: str = Field(min_length=1)
 
     cookie_nombre: str = "hicotea_sesion"
     cookie_secure: bool = False
