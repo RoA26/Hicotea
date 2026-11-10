@@ -1,0 +1,246 @@
+// Tipos de las respuestas de la api (espejo de api/app/esquemas/salidas.py).
+// Los montos llegan como string con dos decimales ("85000.00").
+
+export type Monto = string
+
+export type TipoCategoria = 'INGRESO' | 'GASTO' | 'COSTO_OPERATIVO'
+export type TipoMovimiento = 'INGRESO' | 'GASTO' | 'APORTE' | 'RETIRO' | 'RENDIMIENTO' | 'SALDO_INICIAL'
+export type TipoIngresoGasto = 'INGRESO' | 'GASTO'
+export type OperacionCajita = 'APORTE' | 'RETIRO' | 'RENDIMIENTO' | 'SALDO_INICIAL'
+export type Frecuencia = 'DIARIA' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL'
+export type PropositoCajita = 'CAPITAL' | 'COMPRAS' | 'EMERGENCIA' | 'LIBRE'
+export type Periodicidad = 'SEMANAL' | 'QUINCENAL' | 'MENSUAL' | 'ANUAL'
+
+export type Usuario = {
+  id: number
+  nombre_usuario: string
+  nombre_completo: string
+  fecha_registro: string
+}
+
+export type Mensaje = { mensaje: string }
+
+export type Categoria = { id: number; nombre: string; tipo: TipoCategoria; activa: boolean }
+
+export type Fuente = {
+  id: number
+  nombre: string
+  frecuencia: Frecuencia
+  activa: boolean
+  fecha_creacion: string
+}
+
+export type Movimiento = {
+  id: number
+  tipo: TipoMovimiento
+  fecha: string
+  monto: Monto
+  id_categoria: number | null
+  id_fuente: number | null
+  id_cajita: number | null
+  id_relacionado: number | null
+  descripcion: string | null
+  nombre_categoria: string | null
+  tipo_categoria: TipoCategoria | null
+  nombre_fuente: string | null
+  nombre_cajita: string | null
+  id_cajita_origen: number | null
+  nombre_cajita_origen: string | null
+  entrada: boolean
+  editable: boolean
+  eliminable: boolean
+}
+
+export type PaginaMovimientos = {
+  movimientos: Movimiento[]
+  pagina: number
+  tamano: number
+  total_registros: number
+  total_ingresos: Monto
+  total_gastos: Monto
+  balance: Monto
+  hay_anterior: boolean
+  hay_siguiente: boolean
+  desde: string | null
+  hasta: string | null
+}
+
+export type ResumenPeriodo = {
+  ingresos: Monto
+  gastos_personales: Monto
+  costos_operativos: Monto
+  gastos_totales: Monto
+  balance: Monto
+}
+
+export type ResumenFuente = {
+  id_fuente: number
+  nombre: string
+  bruto: Monto
+  costos: Monto
+  dias_trabajados: number
+  utilidad: Monto
+  promedio_diario: Monto
+  margen: number | null
+}
+
+export type Saldo = { disponible: Monto; en_cajitas: Monto; total: Monto; mes: ResumenPeriodo }
+
+export type RespuestaConSaldo = {
+  mensaje: string
+  id_movimiento: number | null
+  tipo: TipoMovimiento | null
+  saldo: Saldo
+}
+
+export type Cajita = {
+  id: number
+  nombre: string
+  proposito: PropositoCajita
+  porcentaje: Monto
+  es_resto: boolean
+  activa: boolean
+  saldo: Monto
+}
+
+export type LineaReparto = { id_cajita: number; nombre: string; monto: Monto }
+
+export type PropuestaReparto = {
+  disponible: Monto
+  monto_a_repartir: Monto
+  lineas: LineaReparto[]
+  sobrante: Monto
+  suma_porcentajes: Monto
+  hay_resto: boolean
+  porcentajes_incompletos: boolean
+}
+
+export type Meta = {
+  id: number
+  nombre: string
+  monto_objetivo: Monto
+  fecha_objetivo: string | null
+  id_cajita: number
+  nombre_cajita: string
+  saldo_cajita: Monto
+  activa: boolean
+  porcentaje: number
+  faltante: Monto
+  meses_restantes: number | null
+  aporte_mensual: Monto | null
+  cumplida: boolean
+  vencida: boolean
+}
+
+export type Presupuesto = {
+  id: number
+  id_categoria: number
+  categoria: string
+  tipo_categoria: TipoCategoria
+  presupuestado: Monto
+  gastado: Monto
+  porcentaje: number
+  porcentaje_barra: number
+  restante: Monto
+  excedido: boolean
+  en_alerta: boolean
+}
+
+export type PresupuestosDelMes = {
+  mes: string
+  presupuestos: Presupuesto[]
+  total_presupuestado: Monto
+  total_gastado: Monto
+}
+
+export type Recurrente = {
+  id: number
+  nombre: string
+  tipo: TipoMovimiento
+  monto: Monto
+  id_categoria: number
+  id_fuente: number | null
+  id_cajita_origen: number | null
+  periodicidad: Periodicidad
+  dia_ancla: number
+  proxima_fecha: string
+  dias_aviso: number
+  activo: boolean
+  nombre_categoria: string
+  nombre_fuente: string | null
+  nombre_cajita_origen: string | null
+  pendiente: boolean
+  vencido: boolean
+}
+
+export type Atajo = {
+  id: number
+  nombre: string
+  tipo: TipoMovimiento
+  monto: Monto
+  id_categoria: number
+  id_fuente: number | null
+  nombre_categoria: string
+}
+
+export type Acceso = {
+  id: number
+  id_titular: number
+  nombre_completo_titular: string
+  id_invitado: number
+  nombre_usuario_invitado: string
+  nombre_completo_invitado: string
+  fecha_concesion: string
+}
+
+export type Tablero = {
+  hoy: string
+  mes: string
+  disponible: Monto
+  total_cajitas: Monto
+  saldo_total: Monto
+  mes_actual: ResumenPeriodo
+  mes_anterior: ResumenPeriodo
+  cajitas: Cajita[]
+  fuentes: ResumenFuente[]
+  ultimos_movimientos: Movimiento[]
+  sin_movimientos: boolean
+  graficas: {
+    por_mes: { mes: string; ingresos: Monto; gastos: Monto }[]
+    gastos_por_categoria: { categoria: string; total: Monto }[]
+    producido_por_dia: { dia: number; total: Monto }[]
+  }
+  pendientes: Recurrente[]
+  alertas_presupuesto: Presupuesto[]
+  metas: Meta[]
+}
+
+export type DiaCalendario = {
+  fecha: string
+  del_mes: boolean
+  hoy: boolean
+  ingresos: Monto
+  gastos: Monto
+  con_producido: boolean
+  sin_producido: boolean
+}
+
+export type MesCalendario = {
+  mes: string
+  mes_anterior: string
+  mes_siguiente: string
+  semanas: DiaCalendario[][]
+  total_ingresos: Monto
+  total_gastos: Monto
+  dias_con_producido: number
+  dias_sin_producido: number
+}
+
+export type FiltroMovimientos = {
+  desde?: string
+  hasta?: string
+  tipo?: TipoMovimiento
+  id_categoria?: number
+  id_fuente?: number
+  pagina?: number
+}

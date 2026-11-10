@@ -3,8 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/icono.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#07100C" />
+    <meta name="description" content="Tus ingresos, gastos y cajitas de ahorro, en orden." />
     <title>Hicotea</title>
+    <script>
+      // Aplica el tema guardado antes de pintar para evitar el destello oscuro→claro.
+      try {
+        if (localStorage.getItem('hicotea:tema') === 'claro') document.documentElement.dataset.theme = 'light'
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

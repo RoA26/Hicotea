@@ -1,0 +1,42 @@
+/* Paleta de Hicotea (ver CLAUDE.md). Oscuro por defecto; claro con data-theme="light". */
+:root {
+  --fondo: #07100c;
+  --superficie: #0e1a15;
+  --superficie-2: #14231c;
+  --borde: #1f3329;
+  --texto: #e6f4ec;
+  --texto-suave: #8aa597;
+  --acento: #34d399;
+  --acento-vivo: #a3e635;
+  --gasto: #fb7185;
+  --aviso: #fbbf24;
+  --sobre-acento: #04140d;
+}
+
+[data-theme='light'] {
+  --fondo: #f4f9f6;
+  --superficie: #ffffff;
+  --superficie-2: #eaf3ee;
+  --borde: #d3e4da;
+  --texto: #0a1c14;
+  --texto-suave: #4e6a5c;
+  --acento: #059669;
+  --acento-vivo: #65a30d;
+  --gasto: #e11d48;
+  --aviso: #d97706;
+  --sobre-acento: #ffffff;
+}
+
+@theme inline {
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-borde: var(--borde);
+  --color-texto: var(--texto);
+  --color-texto-suave: var(--texto-suave);
+  --color-acento: var(--acento);
+  --color-acento-vivo: var(--acento-vivo);
+  --color-gasto: var(--gasto);
+  --color-aviso: var(--aviso);
+  --color-sobre-acento: var(--sobre-acento);
+}
