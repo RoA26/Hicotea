@@ -114,7 +114,7 @@ export default function Atajos() {
                     <p className="truncate font-medium">{a.nombre}</p>
                     <p className="text-xs text-texto-suave">{a.nombre_categoria}</p>
                   </div>
-                  <span className={a.tipo === 'INGRESO' ? 'cifra text-acento' : 'cifra text-gasto'}>
+                  <span className={a.tipo === 'INGRESO' ? 'cifra text-ingreso' : 'cifra text-gasto'}>
                     {a.tipo === 'INGRESO' ? '+ ' : '− '}
                     {dinero(a.monto)}
                   </span>

@@ -2,8 +2,9 @@ import { StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router'
 import { ProveedorAvisos, ProveedorConfirmar, ProveedorSaldo, ProveedorSesion, useSesion } from './componentes/Globales'
-import { Logo } from './componentes/Iconos'
+import { Simbolo } from './componentes/Marca'
 import { Marco } from './componentes/Marco'
+import '@fontsource/plus-jakarta-sans/latin-800.css'
 import './index.css'
 import Atajos from './paginas/Atajos'
 import CajitaDetalle from './paginas/CajitaDetalle'
@@ -34,7 +35,7 @@ aplicarTema(temaGuardado())
 function Espera() {
   return (
     <div className="grid min-h-dvh place-items-center" aria-busy="true">
-      <Logo className="h-12 w-16 animate-pulse" />
+      <Simbolo className="size-16 animate-pulse" titulo="Cargando Hicotea" />
     </div>
   )
 }

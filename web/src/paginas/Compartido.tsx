@@ -57,7 +57,7 @@ export default function Compartido() {
       ) : m.datos ? (
         <>
           <Tarjeta className="mb-4 grid grid-cols-3 gap-3">
-            <Cifra etiqueta="Ingresos del mes" valor={m.datos.total_ingresos} tono="acento" />
+            <Cifra etiqueta="Ingresos del mes" valor={m.datos.total_ingresos} tono="ingreso" />
             <Cifra etiqueta="Gastos del mes" valor={m.datos.total_gastos} tono="gasto" />
             <Cifra etiqueta="Balance" valor={m.datos.balance} />
           </Tarjeta>

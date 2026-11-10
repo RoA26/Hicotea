@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useTema } from '../tema/tema'
 import { useSesion } from './Globales'
-import { Icono, Logo, type NombreIcono } from './Iconos'
+import { Icono, type NombreIcono } from './Iconos'
+import { Wordmark } from './Marca'
 import { cx } from './ui'
 
 const MENU: { a: string; texto: string; icono: NombreIcono }[] = [
@@ -25,9 +26,8 @@ function Navegacion({ alElegir, tema: { tema, alternar } }: { alElegir?: () => v
   const { usuario, salir } = useSesion()
   return (
     <div className="flex h-full flex-col">
-      <Link to="/inicio" onClick={alElegir} className="flex items-center gap-2 px-3 py-4">
-        <Logo className="h-8 w-10" />
-        <span className="text-lg font-bold tracking-tight">Hicotea</span>
+      <Link to="/inicio" onClick={alElegir} className="px-4 py-4" aria-label="Hicotea, ir a Inicio">
+        <Wordmark />
       </Link>
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2">
         {MENU.map((m) => (
@@ -123,9 +123,8 @@ export function Marco({ children }: { children?: ReactNode }) {
         >
           <Icono nombre="menu" className="size-6" />
         </button>
-        <Link to="/inicio" className="flex items-center gap-2 py-2">
-          <Logo className="h-7 w-9" />
-          <span className="font-bold tracking-tight">Hicotea</span>
+        <Link to="/inicio" className="py-2" aria-label="Hicotea, ir a Inicio">
+          <Wordmark />
         </Link>
       </header>
 

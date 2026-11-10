@@ -115,7 +115,7 @@ export default function Movimientos() {
       ) : (
         <>
           <Tarjeta className="mb-4 grid grid-cols-3 gap-3">
-            <Cifra etiqueta="Ingresos" valor={p.total_ingresos} tono="acento" />
+            <Cifra etiqueta="Ingresos" valor={p.total_ingresos} tono="ingreso" />
             <Cifra etiqueta="Gastos" valor={p.total_gastos} tono="gasto" />
             <Cifra etiqueta="Balance" valor={p.balance} />
           </Tarjeta>

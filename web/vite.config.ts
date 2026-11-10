@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icono.svg'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'Hicotea',
         short_name: 'Hicotea',
@@ -19,8 +19,12 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#07100C',
         theme_color: '#07100C',
-        // Provisional hasta tener el logo final (Fase 0): PNG 192/512 y versión maskable.
-        icons: [{ src: '/icono.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        // Generados con `pnpm iconos` desde los SVG oficiales de Identidad/ (ver scripts/iconos.mjs).
+        icons: [
+          { src: '/icono-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icono-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icono-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         navigateFallback: '/index.html',

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="512" height="512">
+  <!-- Usa currentColor para heredar el color de texto y var(--fondo, #07100C) para el recorte de la moneda -->
+  <g id="hicotea-symbol-mono">
+    <path d="M15 74 L5 67 L15 62 Z" fill="currentColor"/>
+    <rect x="23" y="76" width="15" height="19" rx="7.5" fill="currentColor"/>
+    <rect x="63" y="76" width="15" height="19" rx="7.5" fill="currentColor"/>
+    <ellipse cx="51" cy="68" rx="38" ry="11" fill="none" stroke="currentColor" stroke-width="6.5"/>
+    <ellipse cx="51" cy="51" rx="32" ry="9.5" fill="none" stroke="currentColor" stroke-width="6.5"/>
+    <ellipse cx="51" cy="35" rx="24" ry="8" fill="currentColor"/>
+    <g transform="translate(51, 23) rotate(-18)">
+      <ellipse cx="0" cy="0" rx="13" ry="8.5" fill="currentColor" stroke="var(--fondo, #07100C)" stroke-width="3.5"/>
+    </g>
+    <path d="M83 52 H96 C107 52 115 59 115 69 C115 76 109 81 99 81 H81 Z" fill="currentColor"/>
+  </g>
+</svg>

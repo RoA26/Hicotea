@@ -251,7 +251,7 @@ export function Monto({
   signo?: boolean
   className?: string
 }) {
-  const tono = entrada === undefined ? '' : entrada ? 'text-acento' : 'text-gasto'
+  const tono = entrada === undefined ? '' : entrada ? 'text-ingreso' : 'text-gasto'
   const prefijo = signo && entrada !== undefined ? (entrada ? '+ ' : '− ') : ''
   return <span className={cx('cifra whitespace-nowrap', tono, className)}>{prefijo}{dinero(valor)}</span>
 }
@@ -275,7 +275,7 @@ export function Insignia({ children, tono = 'suave' }: { children: ReactNode; to
   return <span className={cx('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', t)}>{children}</span>
 }
 
-export function Cifra({ etiqueta, valor, tono, grande }: { etiqueta: string; valor: string; tono?: 'acento' | 'gasto'; grande?: boolean }) {
+export function Cifra({ etiqueta, valor, tono, grande }: { etiqueta: string; valor: string; tono?: 'ingreso' | 'gasto'; grande?: boolean }) {
   return (
     <div className="min-w-0">
       <p className="text-xs text-texto-suave">{etiqueta}</p>
@@ -283,7 +283,7 @@ export function Cifra({ etiqueta, valor, tono, grande }: { etiqueta: string; val
         className={cx(
           'cifra truncate font-semibold',
           grande ? 'text-3xl tracking-tight' : 'text-lg',
-          tono === 'acento' && 'text-acento',
+          tono === 'ingreso' && 'text-ingreso',
           tono === 'gasto' && 'text-gasto',
         )}
       >

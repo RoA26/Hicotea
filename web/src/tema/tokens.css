@@ -1,30 +1,33 @@
-/* Paleta de Hicotea (ver CLAUDE.md). Oscuro por defecto; claro con data-theme="light". */
+/* Paleta de Hicotea: valores del kit de identidad final (Identidad/variables_css_finales_tokens_css.md).
+   Oscuro por defecto; claro con data-theme="light" (el kit usa data-tema="claro"; aquí se conserva el atributo de la app). */
 :root {
   --fondo: #07100c;
   --superficie: #0e1a15;
-  --superficie-2: #14231c;
-  --borde: #1f3329;
-  --texto: #e6f4ec;
-  --texto-suave: #8aa597;
+  --superficie-2: #16261f;
+  --borde: #223c30;
+  --texto: #ecfdf5;
+  --texto-suave: #94b2a5;
+  --texto-sobre-acento: #07100c;
   --acento: #34d399;
   --acento-vivo: #a3e635;
+  --ingreso: #34d399;
   --gasto: #fb7185;
   --aviso: #fbbf24;
-  --sobre-acento: #04140d;
 }
 
 [data-theme='light'] {
-  --fondo: #f4f9f6;
+  --fondo: #f4fbf7;
   --superficie: #ffffff;
-  --superficie-2: #eaf3ee;
-  --borde: #d3e4da;
-  --texto: #0a1c14;
-  --texto-suave: #4e6a5c;
-  --acento: #059669;
-  --acento-vivo: #65a30d;
+  --superficie-2: #e6f4ed;
+  --borde: #c5dfd3;
+  --texto: #071912;
+  --texto-suave: #3e6052;
+  --texto-sobre-acento: #ffffff;
+  --acento: #047857;
+  --acento-vivo: #3f6212;
+  --ingreso: #047857;
   --gasto: #e11d48;
   --aviso: #d97706;
-  --sobre-acento: #ffffff;
 }
 
 @theme inline {
@@ -34,9 +37,12 @@
   --color-borde: var(--borde);
   --color-texto: var(--texto);
   --color-texto-suave: var(--texto-suave);
+  --color-sobre-acento: var(--texto-sobre-acento);
   --color-acento: var(--acento);
   --color-acento-vivo: var(--acento-vivo);
+  --color-ingreso: var(--ingreso);
   --color-gasto: var(--gasto);
   --color-aviso: var(--aviso);
-  --color-sobre-acento: var(--sobre-acento);
+
+  --font-marca: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }

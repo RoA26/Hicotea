@@ -33,18 +33,3 @@ export function Icono({ nombre, className = 'size-5' }: { nombre: NombreIcono; c
     </svg>
   )
 }
-
-/** Tortuga de Hicotea (borrador v1 del logo, ver CLAUDE.md). */
-export function Logo({ className = 'size-8' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 48" className={className} aria-hidden>
-      <ellipse cx="14" cy="40" rx="5" ry="4" fill="#059669" />
-      <ellipse cx="42" cy="40" rx="5" ry="4" fill="#059669" />
-      <ellipse cx="54" cy="28" rx="7" ry="6" fill="#34D399" />
-      <circle cx="56" cy="26" r="1.3" fill="#047857" />
-      <path d="M4 36 Q6 10 28 8 Q50 10 52 36 Z" fill="#10B981" stroke="#059669" strokeWidth="2" />
-      <path d="M12 36 L16 22 M44 36 L40 22 M16 22 Q28 14 40 22 M16 22 L28 30 L40 22 M28 30 V36" stroke="#047857" strokeWidth="1.6" fill="none" />
-      <path d="M28 16 l5 3 v5 l-5 3 l-5 -3 v-5 z" fill="#A3E635" />
-    </svg>
-  )
-}

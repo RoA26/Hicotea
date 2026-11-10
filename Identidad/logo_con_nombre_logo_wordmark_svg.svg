@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 120" width="760" height="240">
+  <!-- Símbolo Hicotea 10B -->
+  <g id="hicotea-symbol" transform="translate(4, 2)">
+    <path d="M15 74 L5 67 L15 62 Z" fill="#34D399"/>
+    <rect x="23" y="76" width="16" height="20" rx="8" fill="#34D399"/>
+    <rect x="63" y="76" width="16" height="20" rx="8" fill="#34D399"/>
+
+    <path d="M13 65 C13 78 89 78 89 65 V74 C89 87 13 87 13 74 Z" fill="#16261F" stroke="#34D399" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="51" cy="64" rx="38" ry="11.5" fill="#0E1A15" stroke="#34D399" stroke-width="4.5"/>
+    <line x1="34" y1="74" x2="34" y2="81" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+    <line x1="51" y1="75" x2="51" y2="82" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+    <line x1="68" y1="74" x2="68" y2="81" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+
+    <path d="M19 49 C19 59 83 59 83 49 V57 C83 67 19 67 19 57 Z" fill="#16261F" stroke="#34D399" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="51" cy="48" rx="32" ry="10" fill="#0E1A15" stroke="#34D399" stroke-width="4.5"/>
+    <line x1="38" y1="57" x2="38" y2="63" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+    <line x1="51" y1="58" x2="51" y2="64" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+    <line x1="64" y1="57" x2="64" y2="63" stroke="#34D399" stroke-width="3" stroke-linecap="round"/>
+
+    <path d="M26 35 C26 43 76 43 76 35 V42 C76 50 26 50 26 42 Z" fill="#34D399" stroke="#07100C" stroke-width="2.5"/>
+    <ellipse cx="51" cy="34" rx="25" ry="8.5" fill="#34D399" stroke="#07100C" stroke-width="3"/>
+    <rect x="35" y="30.5" width="32" height="7" rx="3.5" fill="#07100C"/>
+
+    <g transform="translate(51, 24) rotate(-18)">
+      <ellipse cx="0" cy="3.5" rx="13" ry="8.5" fill="#16261F" stroke="#A3E635" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="13" ry="8.5" fill="#A3E635" stroke="#07100C" stroke-width="3"/>
+      <ellipse cx="0" cy="0" rx="6" ry="3.2" fill="none" stroke="#07100C" stroke-width="2.5"/>
+    </g>
+    <path d="M36 34.5 H66" stroke="#07100C" stroke-width="4.5" stroke-linecap="round"/>
+
+    <path d="M83 52 H96 C107 52 115 59 115 69 C115 76 109 81 99 81 H81 Z" fill="#34D399" stroke="#07100C" stroke-width="3.5" stroke-linejoin="round"/>
+    <circle cx="104" cy="65" r="3" fill="#07100C"/>
+    <rect x="90" y="57" width="8.5" height="4" rx="2" fill="#A3E635"/>
+  </g>
+
+  <!-- Wordmark Geométrico -->
+  <g id="hicotea-wordmark" fill="currentColor">
+    <text x="132" y="76" font-family="system-ui, -apple-system, 'Plus Jakarta Sans', sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5">Hicotea</text>
+    <circle cx="335" cy="68" r="6.5" fill="#A3E635"/>
+  </g>
+</svg>

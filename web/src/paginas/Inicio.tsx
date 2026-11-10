@@ -50,7 +50,7 @@ function BotonesRapidos({ atajos, alProducido }: { atajos: Atajo[]; alProducido:
               onClick={() => usar(a)}
               className={cx(
                 'cifra rounded-full border px-3 py-2 text-sm transition-colors disabled:opacity-50',
-                a.tipo === 'INGRESO' ? 'border-acento/30 hover:bg-acento/10' : 'border-gasto/30 hover:bg-gasto/10',
+                a.tipo === 'INGRESO' ? 'border-ingreso/30 hover:bg-ingreso/10' : 'border-gasto/30 hover:bg-gasto/10',
               )}
             >
               <Icono nombre="atajos" className="mr-1 inline size-3.5" />

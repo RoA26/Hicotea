@@ -26,7 +26,7 @@ export function VistaCalendario({ c, alCambiarMes }: { c: MesCalendario; alCambi
         </Boton>
       </div>
       <Tarjeta className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Cifra etiqueta="Ingresos" valor={c.total_ingresos} tono="acento" />
+        <Cifra etiqueta="Ingresos" valor={c.total_ingresos} tono="ingreso" />
         <Cifra etiqueta="Gastos" valor={c.total_gastos} tono="gasto" />
         <div>
           <p className="text-xs text-texto-suave">Días con producido</p>
@@ -64,7 +64,7 @@ export function VistaCalendario({ c, alCambiarMes }: { c: MesCalendario; alCambi
                     <span className={cx('grid size-6 place-items-center rounded-full', d.hoy && 'bg-acento font-bold text-sobre-acento')}>{Number(d.fecha.slice(8))}</span>
                     {d.con_producido && <span className="size-1.5 rounded-full bg-acento-vivo" aria-label="Con producido" />}
                   </div>
-                  {ing && <p className="truncate text-acento">+{corta(d.ingresos)}</p>}
+                  {ing && <p className="truncate text-ingreso">+{corta(d.ingresos)}</p>}
                   {gas && <p className="truncate text-gasto">−{corta(d.gastos)}</p>}
                 </div>
               )

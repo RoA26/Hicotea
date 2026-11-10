@@ -55,7 +55,7 @@ export function GraficaMeses({ datos }: { datos: { mes: string; ingresos: string
     <div>
       <div className="mb-2 flex gap-4 text-xs text-texto-suave">
         <span className="flex items-center gap-1.5">
-          <span className="size-3 rounded-sm bg-acento" /> Ingresos
+          <span className="size-3 rounded-sm bg-ingreso" /> Ingresos
         </span>
         <span className="flex items-center gap-1.5">
           <span className="size-3 rounded-sm" style={RAYADO} /> Gastos
@@ -75,7 +75,7 @@ export function GraficaMeses({ datos }: { datos: { mes: string; ingresos: string
             onClick={() => setActivo(i)}
             className={cx('flex h-full flex-1 items-end justify-center gap-[2px] rounded-t-md', activo === i && 'bg-superficie-2')}
           >
-            <span className="w-full max-w-4 rounded-t bg-acento" style={{ height: alto(numero(x.ingresos), max) }} />
+            <span className="w-full max-w-4 rounded-t bg-ingreso" style={{ height: alto(numero(x.ingresos), max) }} />
             <span className="w-full max-w-4 rounded-t" style={{ ...RAYADO, height: alto(numero(x.gastos), max) }} />
           </button>
         ))}
@@ -133,7 +133,7 @@ export function GraficaDias({ datos }: { datos: { dia: number; total: string }[]
             onClick={() => setActivo(i)}
             className={cx('flex h-full flex-1 items-end rounded-t-sm', activo === i && 'bg-superficie-2')}
           >
-            <span className="w-full rounded-t-sm bg-acento" style={{ height: alto(numero(x.total), max) }} />
+            <span className="w-full rounded-t-sm bg-ingreso" style={{ height: alto(numero(x.total), max) }} />
           </button>
         ))}
       </div>

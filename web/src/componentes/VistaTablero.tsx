@@ -67,7 +67,7 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
       <Seccion titulo={`Este mes · ${nombreMes(t.mes)}`}>
         <Tarjeta className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
-            <Cifra etiqueta="Ingresos" valor={m.ingresos} tono="acento" />
+            <Cifra etiqueta="Ingresos" valor={m.ingresos} tono="ingreso" />
             <Variacion actual={m.ingresos} anterior={t.mes_anterior.ingresos} />
           </div>
           <div>

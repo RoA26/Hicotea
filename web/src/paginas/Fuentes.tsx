@@ -90,7 +90,7 @@ export default function Fuentes() {
                 {r.margen !== null && <Insignia tono={r.margen >= 0 ? 'acento' : 'gasto'}>margen {r.margen}%</Insignia>}
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                <Cifra etiqueta="Bruto" valor={r.bruto} tono="acento" />
+                <Cifra etiqueta="Bruto" valor={r.bruto} tono="ingreso" />
                 <Cifra etiqueta="Costos" valor={r.costos} tono="gasto" />
                 <Cifra etiqueta="Utilidad" valor={r.utilidad} />
               </div>

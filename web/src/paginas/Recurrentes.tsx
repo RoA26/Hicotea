@@ -66,7 +66,7 @@ export default function Recurrentes() {
                   </p>
                   <p className="text-xs text-texto-suave">Próxima: {fechaLarga(r.proxima_fecha)}</p>
                 </div>
-                <span className={r.tipo === 'INGRESO' ? 'cifra font-semibold text-acento' : 'cifra font-semibold text-gasto'}>
+                <span className={r.tipo === 'INGRESO' ? 'cifra font-semibold text-ingreso' : 'cifra font-semibold text-gasto'}>
                   {r.tipo === 'INGRESO' ? '+ ' : '− '}
                   {dinero(r.monto)}
                 </span>

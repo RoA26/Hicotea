@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router'
 import { useSesion } from '../componentes/Globales'
-import { Logo } from '../componentes/Iconos'
+import { Wordmark } from '../componentes/Marca'
 import { BotonEnlace } from '../componentes/ui'
 
 const PUNTOS = [
@@ -17,10 +17,7 @@ export default function Landing() {
   return (
     <div className="min-h-dvh">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-        <span className="flex items-center gap-2">
-          <Logo className="h-8 w-10" />
-          <span className="text-lg font-bold tracking-tight">Hicotea</span>
-        </span>
+        <Wordmark />
         <BotonEnlace to="/login" variante="fantasma" chico>
           Iniciar sesión
         </BotonEnlace>
