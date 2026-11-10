@@ -1,0 +1,21 @@
+# Solo PostgreSQL para desarrollo. La api y la web corren fuera de Docker por ahora.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hicotea
+      POSTGRES_PASSWORD: hicotea
+      POSTGRES_DB: hicotea
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hicotea -d hicotea"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
