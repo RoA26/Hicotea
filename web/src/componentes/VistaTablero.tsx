@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { ContadorAnimado } from '../animacion/ContadorAnimado'
 import type { Tablero } from '../api/tipos'
 import { dinero, fechaCorta, nombreMes, NOMBRE_PROPOSITO, numero } from '../lib/formato'
 import { GraficaCategorias, GraficaDias, GraficaMeses } from './Graficas'
@@ -34,10 +35,22 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
     <>
       <Tarjeta className="p-5">
         <p className="text-sm text-texto-suave">Saldo total</p>
-        <p className="cifra texto-degradado text-4xl font-bold tracking-tight sm:text-5xl">{dinero(t.saldo_total)}</p>
+        <p className="cifra texto-degradado text-4xl font-bold tracking-tight sm:text-5xl">
+          <ContadorAnimado valor={t.saldo_total} />
+        </p>
         <div className="mt-4 grid grid-cols-2 gap-3 border-t border-borde pt-4">
-          <Cifra etiqueta="Disponible" valor={t.disponible} />
-          <Cifra etiqueta="En cajitas" valor={t.total_cajitas} />
+          <div>
+            <p className="text-xs text-texto-suave">Disponible</p>
+            <p className="cifra truncate text-lg font-semibold">
+              <ContadorAnimado valor={t.disponible} />
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-texto-suave">En cajitas</p>
+            <p className="cifra truncate text-lg font-semibold">
+              <ContadorAnimado valor={t.total_cajitas} />
+            </p>
+          </div>
         </div>
       </Tarjeta>
 

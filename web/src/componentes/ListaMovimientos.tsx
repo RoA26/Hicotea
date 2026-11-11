@@ -20,8 +20,12 @@ function detalle(m: Movimiento): string {
 export function ListaMovimientos({ movimientos, acciones }: { movimientos: Movimiento[]; acciones?: (m: Movimiento) => ReactNode }) {
   return (
     <ul className="divide-y divide-borde overflow-hidden rounded-2xl border border-borde bg-superficie">
-      {movimientos.map((m) => (
-        <li key={m.id} className="flex items-center gap-3 px-4 py-3">
+      {movimientos.map((m, i) => (
+        <li
+          key={m.id}
+          className="anim-escalonado flex items-center gap-3 px-4 py-3"
+          style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+        >
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{tituloMovimiento(m)}</p>
             <p className="truncate text-xs text-texto-suave">{detalle(m)}</p>

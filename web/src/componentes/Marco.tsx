@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { TransicionPagina } from '../animacion/TransicionPagina'
 import { useTema } from '../tema/tema'
 import { useSesion } from './Globales'
 import { Icono, type NombreIcono } from './Iconos'
@@ -128,7 +129,9 @@ export function Marco({ children }: { children?: ReactNode }) {
         </Link>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-24 sm:px-6 lg:pt-8">{children ?? <Outlet />}</main>
+      <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-24 sm:px-6 lg:pt-8">
+        <TransicionPagina>{children ?? <Outlet />}</TransicionPagina>
+      </main>
     </div>
   )
 }

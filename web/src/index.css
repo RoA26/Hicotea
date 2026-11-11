@@ -35,3 +35,55 @@
   background-clip: text;
   color: transparent;
 }
+
+/* Animaciones y microinteracciones de Fase 4 */
+@keyframes modalEntrada {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fondoEntrada {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes itemEscalonado {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-modal {
+  animation: modalEntrada 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anim-fondo {
+  animation: fondoEntrada 200ms ease-out forwards;
+}
+
+.anim-escalonado {
+  animation: itemEscalonado 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
