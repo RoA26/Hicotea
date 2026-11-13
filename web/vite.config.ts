@@ -28,20 +28,13 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api(?:\/|$)/],
+        // Toda respuesta API, incluso autenticada, permanece fuera de Cache Storage.
+        importScripts: ['/sw-privacy.js'],
         runtimeCaching: [
           {
-            // Modo offline: las lecturas de la api se sirven de caché si no hay red.
-            // Nunca auth; la caché se borra al cerrar sesión (ver Globales.tsx).
-            urlPattern: ({ url, request }) =>
-              request.method === 'GET' && url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/auth/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'hicotea-api',
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
-              cacheableResponse: { statuses: [200] },
-            },
+            urlPattern: ({ url }) => /^\/api(?:\/|$)/.test(url.pathname),
+            handler: 'NetworkOnly',
           },
         ],
       },
