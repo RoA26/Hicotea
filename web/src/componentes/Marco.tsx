@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { TransicionPagina } from '../animacion/TransicionPagina'
+import { FUNCIONES } from '../lib/funciones'
 import { useTema } from '../tema/tema'
 import { useSesion } from './Globales'
 import { Icono, type NombreIcono } from './Iconos'
@@ -17,7 +18,8 @@ const MENU: { a: string; texto: string; icono: NombreIcono }[] = [
   { a: '/presupuestos', texto: 'Presupuestos', icono: 'presupuestos' },
   { a: '/recurrentes', texto: 'Recurrentes', icono: 'recurrentes' },
   { a: '/atajos', texto: 'Atajos', icono: 'atajos' },
-  { a: '/compartir', texto: 'Compartir', icono: 'compartir' },
+  // Compartir sale del menú de forma reversible (lib/funciones.ts); sus rutas y datos siguen intactos.
+  ...(FUNCIONES.compartir ? [{ a: '/compartir', texto: 'Compartir', icono: 'compartir' as const }] : []),
 ]
 
 type Tema = ReturnType<typeof useTema>
