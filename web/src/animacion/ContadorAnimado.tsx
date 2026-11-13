@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import type { AnimationPlaybackControls } from 'motion'
+import { useLayoutEffect, useRef } from 'react'
 import { dinero, numero } from '../lib/formato'
 
 interface Props {
@@ -10,59 +11,68 @@ interface Props {
   esDinero?: boolean
 }
 
+/** easeOutCubic, la misma curva que usaba la versión con requestAnimationFrame. */
+const FRENADO = [0.33, 1, 0.68, 1] as const
+
 /**
- * Contador de cifras animado con física de frenado suave (Fase 4).
- * Al registrar un ingreso, gasto o usar un atajo, el saldo total rueda
- * fluidamente hacia la nueva cantidad sin saltos bruscos.
- * Respeta prefers-reduced-motion.
+ * Motion se carga bajo demanda la primera vez que una cifra cambia (~25 kB gzip
+ * que no van en el paquete inicial). La primera pintura muestra la cifra final
+ * sin esperar a nada. Ver docs/decisiones-foundations.md (D-M2).
+ */
+let cargaMotion: Promise<typeof import('./motionAnimar')> | null = null
+const motion = () => (cargaMotion ??= import('./motionAnimar'))
+
+/**
+ * Contador de cifras animado: al registrar un ingreso, gasto o usar un atajo,
+ * el saldo rueda hacia la nueva cantidad.
+ *
+ * Usa `animate()` de Motion y escribe el texto directamente en el DOM, así que
+ * React no vuelve a renderizar en cada frame. Si llega un valor nuevo a mitad
+ * de camino, continúa desde la cifra que se está viendo (no salta).
+ * Con prefers-reduced-motion, o si Motion no carga (sin red y sin caché), la
+ * cifra cambia sin animación.
  */
 export function ContadorAnimado({ valor, className, duracion = 450, esDinero = true }: Props) {
   const destino = typeof valor === 'number' ? valor : numero(valor)
-  const [actual, setActual] = useState(destino)
-  const previoRef = useRef(destino)
-  const frameRef = useRef<number | null>(null)
+  const ref = useRef<HTMLSpanElement>(null)
+  const visible = useRef<number | null>(null)
 
-  useEffect(() => {
-    const inicio = previoRef.current
-    const fin = destino
-    previoRef.current = fin
-
-    // Si no hay cambio o el usuario prefiere movimiento reducido, saltamos directo
-    if (inicio === fin || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setActual(fin)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const pintar = (n: number) => {
+      visible.current = n
+      el.textContent = esDinero ? dinero(n) : Math.round(n).toLocaleString('es-CO')
+    }
+    const inicio = visible.current
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (inicio === null || inicio === destino || reducido) {
+      pintar(destino)
       return
     }
-
-    const tiempoInicio = performance.now()
-
-    const animar = (tiempoAhora: number) => {
-      const transcurrido = tiempoAhora - tiempoInicio
-      const progreso = Math.min(transcurrido / duracion, 1)
-
-      // Función de aceleración/desaceleración suave (easeOutCubic)
-      const factor = 1 - Math.pow(1 - progreso, 3)
-      const valorIntermedio = inicio + (fin - inicio) * factor
-
-      setActual(valorIntermedio)
-
-      if (progreso < 1) {
-        frameRef.current = requestAnimationFrame(animar)
-      } else {
-        setActual(fin)
-      }
-    }
-
-    frameRef.current = requestAnimationFrame(animar)
-
+    let cancelado = false
+    let control: AnimationPlaybackControls | null = null
+    motion().then(
+      ({ animate }) => {
+        if (cancelado) return
+        control = animate(inicio, destino, {
+          duration: duracion / 1000,
+          ease: FRENADO,
+          onUpdate: pintar,
+          onComplete: () => pintar(destino),
+        })
+      },
+      () => {
+        cargaMotion = null // reintenta la próxima vez
+        if (!cancelado) pintar(destino)
+      },
+    )
     return () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current)
-      }
+      cancelado = true
+      control?.stop()
     }
-  }, [destino, duracion])
+  }, [destino, duracion, esDinero])
 
-  const texto = esDinero ? dinero(actual) : Math.round(actual).toLocaleString('es-CO')
-
-  return <span className={className}>{texto}</span>
+  // El texto lo escribe el efecto; React no lo toca para no pisar la animación.
+  return <span ref={ref} className={className} />
 }
-
