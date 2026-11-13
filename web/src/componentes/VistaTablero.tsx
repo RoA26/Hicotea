@@ -20,6 +20,59 @@ function Variacion({ actual, anterior }: { actual: string; anterior: string }) {
 }
 
 /**
+ * D-F1 y D-F2: estados financieros que necesitan explicación. No ocultan nada
+ * ni corrigen nada solos; solo dicen qué pasa y cómo resolverlo.
+ */
+function AvisosIntegridad({ t, enlaces }: { t: Tablero; enlaces: boolean }) {
+  const disponible = numero(t.disponible)
+  const inactivas = t.cajitas_inactivas_con_saldo ?? []
+  if (disponible >= 0 && inactivas.length === 0) return null
+  return (
+    <div className="space-y-2" role="status">
+      {disponible < 0 && (
+        <div className="rounded-2xl border border-aviso/30 bg-aviso/10 p-4 text-sm">
+          <p className="font-semibold text-aviso">Tu disponible está en negativo</p>
+          <p className="mt-1 text-texto-suave">
+            Tienes <span className="cifra font-medium text-texto">{dinero(t.total_cajitas)}</span> en cajitas, pero
+            entre lo que entró y lo que salió falta <span className="cifra font-medium text-texto">{dinero(-disponible)}</span>.
+            Suele pasar al corregir o borrar un ingreso que ya habías repartido. Para equilibrarlo, retira{' '}
+            <span className="cifra font-medium text-texto">{dinero(-disponible)}</span> de una cajita o registra el ingreso
+            que falte.
+          </p>
+          {enlaces && (
+            <Link to="/cajitas" className="mt-2 inline-block text-acento hover:underline">
+              Ir a cajitas
+            </Link>
+          )}
+        </div>
+      )}
+      {inactivas.length > 0 && (
+        <div className="rounded-2xl border border-aviso/30 bg-aviso/10 p-4 text-sm">
+          <p className="font-semibold text-aviso">Hay dinero en cajitas desactivadas</p>
+          <p className="mt-1 text-texto-suave">
+            Se cuenta en tu saldo total. Actívalas para retirarlo o seguir usándolo:
+          </p>
+          <ul className="mt-2 space-y-1">
+            {inactivas.map((c) => (
+              <li key={c.id} className="flex justify-between gap-3">
+                {enlaces ? (
+                  <Link to={`/cajitas/${c.id}`} className="truncate text-acento hover:underline">
+                    {c.nombre}
+                  </Link>
+                ) : (
+                  <span className="truncate">{c.nombre}</span>
+                )}
+                <span className="cifra shrink-0 font-medium">{dinero(c.saldo)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
  * Contenido del tablero. Lo usan el inicio (con `extra` para botones rápidos y
  * pendientes) y la vista de solo lectura de una cuenta compartida (`enlaces` = false).
  */
@@ -53,6 +106,8 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
           </div>
         </div>
       </Tarjeta>
+
+      <AvisosIntegridad t={t} enlaces={enlaces} />
 
       {extra}
 
@@ -129,7 +184,9 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
                 {t.fuentes.map((f) => (
                   <Tarjeta key={f.id_fuente} className="py-3">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-medium">{f.nombre}</span>
+                      <span className="font-medium">
+                        {f.nombre} {!f.activa && <Insignia>Inactiva</Insignia>}
+                      </span>
                       <span className="cifra font-semibold">{dinero(f.utilidad)}</span>
                     </div>
                     <p className="cifra text-xs text-texto-suave">

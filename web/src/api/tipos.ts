@@ -76,6 +76,8 @@ export type ResumenPeriodo = {
 export type ResumenFuente = {
   id_fuente: number
   nombre: string
+  /** Una fuente inactiva aparece si tuvo movimientos en el periodo (D-F4). */
+  activa: boolean
   bruto: Monto
   costos: Monto
   dias_trabajados: number
@@ -84,7 +86,17 @@ export type ResumenFuente = {
   margen: number | null
 }
 
-export type Saldo = { disponible: Monto; en_cajitas: Monto; total: Monto; mes: ResumenPeriodo }
+/** D-F1: dinero en una cajita desactivada (inconsistencia histórica): se cuenta en el total y se avisa. */
+export type CajitaInactivaConSaldo = { id: number; nombre: string; saldo: Monto }
+
+export type Saldo = {
+  disponible: Monto
+  /** Incluye cajitas inactivas con saldo (D-F1). */
+  en_cajitas: Monto
+  total: Monto
+  mes: ResumenPeriodo
+  cajitas_inactivas_con_saldo: CajitaInactivaConSaldo[]
+}
 
 export type RespuestaConSaldo = {
   mensaje: string
@@ -197,8 +209,10 @@ export type Tablero = {
   hoy: string
   mes: string
   disponible: Monto
+  /** Incluye cajitas inactivas con saldo (D-F1). */
   total_cajitas: Monto
   saldo_total: Monto
+  cajitas_inactivas_con_saldo: CajitaInactivaConSaldo[]
   mes_actual: ResumenPeriodo
   mes_anterior: ResumenPeriodo
   cajitas: Cajita[]
@@ -207,7 +221,7 @@ export type Tablero = {
   sin_movimientos: boolean
   graficas: {
     por_mes: { mes: string; ingresos: Monto; gastos: Monto }[]
-    gastos_por_categoria: { categoria: string; total: Monto }[]
+    gastos_por_categoria: { id_categoria: number; categoria: string; tipo: TipoCategoria; total: Monto }[]
     producido_por_dia: { dia: number; total: Monto }[]
   }
   pendientes: Recurrente[]

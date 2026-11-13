@@ -86,6 +86,7 @@ class ResumenPeriodo(BaseModel):
 class ResumenFuente(BaseModel):
     id_fuente: int
     nombre: str
+    activa: bool = True  # una fuente inactiva aparece si tuvo movimientos en el periodo (D-F4)
     bruto: Dinero
     costos: Dinero
     dias_trabajados: int
@@ -94,11 +95,20 @@ class ResumenFuente(BaseModel):
     margen: int | None
 
 
+class CajitaInactivaConSaldo(BaseModel):
+    """D-F1: dinero en una cajita desactivada (inconsistencia histórica). Se cuenta y se avisa."""
+
+    id: int
+    nombre: str
+    saldo: Dinero
+
+
 class Saldo(BaseModel):
     disponible: Dinero
-    en_cajitas: Dinero
+    en_cajitas: Dinero  # incluye cajitas inactivas con saldo (D-F1)
     total: Dinero
     mes: ResumenPeriodo
+    cajitas_inactivas_con_saldo: list[CajitaInactivaConSaldo] = []
 
 
 class RespuestaConSaldo(BaseModel):
@@ -226,7 +236,9 @@ class TotalMes(BaseModel):
 
 
 class TotalCategoria(BaseModel):
+    id_categoria: int
     categoria: str
+    tipo: TipoCategoria
     total: Dinero
 
 
@@ -245,8 +257,9 @@ class Tablero(BaseModel):
     hoy: date
     mes: str
     disponible: Dinero
-    total_cajitas: Dinero
+    total_cajitas: Dinero  # incluye cajitas inactivas con saldo (D-F1)
     saldo_total: Dinero
+    cajitas_inactivas_con_saldo: list[CajitaInactivaConSaldo] = []
     mes_actual: ResumenPeriodo
     mes_anterior: ResumenPeriodo
     cajitas: list[CajitaOut]

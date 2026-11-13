@@ -65,14 +65,15 @@ def registrar_producido(form: ProducidoForm, u: IdUsuario, con: Con):
 
 
 @router.put("/movimientos/{id_movimiento}", response_model=MovimientoOut)
-def actualizar(id_movimiento: int, form: MovimientoForm, u: IdUsuario, con: Con):
-    return movimientos.actualizar(con, u, id_movimiento, form)
+def actualizar(id_movimiento: int, form: MovimientoForm, u: IdUsuario, con: Con, confirmar_negativo: bool = False):
+    """`confirmar_negativo=true` acepta una corrección que deja el disponible negativo (D-F2, responde 409 si falta)."""
+    return movimientos.actualizar(con, u, id_movimiento, form, confirmar_negativo)
 
 
 @router.delete("/movimientos/{id_movimiento}", response_model=RespuestaConSaldo)
-def eliminar(id_movimiento: int, u: IdUsuario, con: Con):
-    """También es el "Deshacer" tras un registro rápido."""
-    movimientos.eliminar(con, u, id_movimiento)
+def eliminar(id_movimiento: int, u: IdUsuario, con: Con, confirmar_negativo: bool = False):
+    """También es el "Deshacer" tras un registro rápido. `confirmar_negativo`: ver D-F2."""
+    movimientos.eliminar(con, u, id_movimiento, confirmar_negativo)
     return con_saldo(con, u, "Movimiento eliminado.")
 
 

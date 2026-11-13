@@ -23,16 +23,28 @@ def _mes(anio: int, mes: int) -> tuple[date, date]:
     return reloj.primer_dia(anio, mes), reloj.ultimo_dia(anio, mes)
 
 
+def _dinero_en_cajitas(todas: list[dict]) -> tuple[Decimal, list[dict]]:
+    """D-F1, segunda protección: el total cuenta el saldo de **todas** las cajitas.
+    Una cajita inactiva debería tener saldo 0; si no (datos anteriores a D-F1 o
+    una inconsistencia histórica), su dinero se suma igual y se devuelve aparte
+    para avisar. Nunca se corrige ningún registro automáticamente."""
+    total = sum((c["saldo"] for c in todas), Decimal(0))
+    inactivas = [{"id": c["id"], "nombre": c["nombre"], "saldo": c["saldo"]}
+                 for c in todas if not c["activa"] and c["saldo"] != 0]
+    return total, inactivas
+
+
 def saldo(con: Connection, id_usuario: int) -> dict:
     """Saldo actual y resumen del mes; se devuelve tras cada registro rápido."""
     hoy = reloj.hoy()
     disponible = repo_mov.disponible(con, id_usuario)
-    en_cajitas = sum((c["saldo"] for c in cajitas.listar_activas(con, id_usuario)), Decimal(0))
+    en_cajitas, inactivas = _dinero_en_cajitas(cajitas.listar(con, id_usuario))
     return {
         "disponible": disponible,
         "en_cajitas": en_cajitas,
         "total": disponible + en_cajitas,
         "mes": _resumen(con, id_usuario, *_mes(hoy.year, hoy.month)),
+        "cajitas_inactivas_con_saldo": inactivas,
     }
 
 
@@ -40,8 +52,9 @@ def construir(con: Connection, id_usuario: int) -> dict:
     hoy = reloj.hoy()
     desde, hasta = _mes(hoy.year, hoy.month)
     anterior = reloj.sumar_meses(desde, -1)
-    activas = cajitas.listar_activas(con, id_usuario)
-    total_cajitas = sum((c["saldo"] for c in activas), Decimal(0))
+    todas = cajitas.listar(con, id_usuario)
+    activas = [c for c in todas if c["activa"]]
+    total_cajitas, inactivas = _dinero_en_cajitas(todas)
     disponible = repo_mov.disponible(con, id_usuario)
     ultimos = [movimientos.detallar(m) for m in repo_mov.ultimos(con, id_usuario, 5)]
     return {
@@ -50,6 +63,7 @@ def construir(con: Connection, id_usuario: int) -> dict:
         "disponible": disponible,
         "total_cajitas": total_cajitas,
         "saldo_total": disponible + total_cajitas,
+        "cajitas_inactivas_con_saldo": inactivas,
         "mes_actual": _resumen(con, id_usuario, desde, hasta),
         "mes_anterior": _resumen(con, id_usuario, *_mes(anterior.year, anterior.month)),
         "cajitas": activas,

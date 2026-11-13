@@ -11,6 +11,7 @@ from app.modelo import calculos, dinero, reloj
 from app.modelo.enums import Periodicidad, TipoMovimiento
 from app.repos import otros as repo
 from app.servicios import cajitas, movimientos
+from app.servicios.serializacion import serializar_finanzas
 
 
 def _con_estado(r: dict, hoy) -> dict:
@@ -64,6 +65,7 @@ def eliminar(con: Connection, id_usuario: int, id_recurrente: int) -> None:
 def confirmar(con: Connection, id_usuario: int, id_recurrente: int, conf: ConfirmacionRecurrenteForm) -> dict:
     """Registra el movimiento del periodo y programa el siguiente. Todo en una
     transacción: si el registro falla, la fecha no avanza."""
+    serializar_finanzas(con, id_usuario)  # antes de leer la próxima fecha: dos confirmaciones no avanzan en paralelo
     r = obtener(con, id_usuario, id_recurrente)
     if not r["activo"]:
         raise ReglaNegocio("Este recurrente está pausado.")
@@ -89,6 +91,7 @@ def confirmar(con: Connection, id_usuario: int, id_recurrente: int, conf: Confir
 
 def omitir(con: Connection, id_usuario: int, id_recurrente: int) -> dict:
     """Salta este periodo sin registrar nada (ej. este mes no se pagó)."""
+    serializar_finanzas(con, id_usuario)
     _avanzar(con, id_usuario, obtener(con, id_usuario, id_recurrente))
     return obtener(con, id_usuario, id_recurrente)
 

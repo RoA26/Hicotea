@@ -5,6 +5,7 @@ import { cajitas as api, movimientos } from '../api/cliente'
 import type { OperacionCajita } from '../api/tipos'
 import { useAvisar, useConfirmar, useSaldo } from '../componentes/Globales'
 import { Icono } from '../componentes/Iconos'
+import { conConfirmacionNegativo } from '../lib/correcciones'
 import { ListaMovimientos, tituloMovimiento } from '../componentes/ListaMovimientos'
 import { Modal } from '../componentes/Modal'
 import {
@@ -105,7 +106,8 @@ export default function CajitaDetalle() {
     )
       return
     try {
-      const r = await movimientos.eliminar(idm)
+      const r = await conConfirmacionNegativo(confirmar, (ok) => movimientos.eliminar(idm, ok))
+      if (!r) return
       setSaldo(r.saldo)
       avisarCambio()
       avisar(r.mensaje)

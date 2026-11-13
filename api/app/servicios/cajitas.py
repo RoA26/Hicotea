@@ -12,6 +12,7 @@ from app.modelo.enums import TipoMovimiento
 from app.repos import cajita as repo
 from app.repos import movimiento as repo_mov
 from app.servicios.movimientos import detallar
+from app.servicios.serializacion import serializar_finanzas
 
 CIEN = Decimal(100)
 
@@ -47,6 +48,7 @@ def disponible(con: Connection, id_usuario: int) -> Decimal:
 
 
 def crear(con: Connection, id_usuario: int, form: CajitaForm) -> dict:
+    serializar_finanzas(con, id_usuario)  # suma de porcentajes y cajita resto única
     nombre = _nombre(form.nombre)
     _validar_nombre_unico(con, id_usuario, nombre, None)
     porcentaje = Decimal(0) if form.es_resto else form.porcentaje
@@ -63,6 +65,7 @@ def crear(con: Connection, id_usuario: int, form: CajitaForm) -> dict:
 
 
 def actualizar(con: Connection, id_usuario: int, id_cajita: int, form: CajitaForm) -> dict:
+    serializar_finanzas(con, id_usuario)
     cajita = obtener(con, id_usuario, id_cajita)
     nombre = _nombre(form.nombre)
     _validar_nombre_unico(con, id_usuario, nombre, id_cajita)
@@ -76,6 +79,7 @@ def actualizar(con: Connection, id_usuario: int, id_cajita: int, form: CajitaFor
 
 
 def cambiar_estado(con: Connection, id_usuario: int, id_cajita: int, activa: bool) -> dict:
+    serializar_finanzas(con, id_usuario)  # "saldo 0 para desactivar" se lee después de cualquier operación en curso
     cajita = obtener(con, id_usuario, id_cajita)
     if not activa and cajita["saldo"] != 0:
         raise ReglaNegocio(
@@ -93,6 +97,7 @@ def cambiar_estado(con: Connection, id_usuario: int, id_cajita: int, activa: boo
 
 
 def registrar_operacion(con: Connection, id_usuario: int, id_cajita: int, form: OperacionCajitaForm) -> int:
+    serializar_finanzas(con, id_usuario)  # antes de leer saldo y disponible
     cajita = obtener(con, id_usuario, id_cajita)
     if not cajita["activa"]:
         raise ReglaNegocio("La cajita está desactivada.")
@@ -144,6 +149,7 @@ def proponer_reparto(con: Connection, id_usuario: int, monto_texto: str | None) 
 
 def confirmar_reparto(con: Connection, id_usuario: int, form: RepartoForm) -> Decimal:
     """Crea todos los aportes del reparto en una sola transacción: o todos o ninguno."""
+    serializar_finanzas(con, id_usuario)
     activas = {c["id"]: c for c in listar_activas(con, id_usuario)}
     aportes: list[tuple[dict, Decimal]] = []
     for linea in form.lineas:

@@ -6,6 +6,7 @@ import { Icono } from '../componentes/Iconos'
 import { ListaMovimientos, tituloMovimiento } from '../componentes/ListaMovimientos'
 import { SelectorCategoria, SelectorFuente } from '../componentes/Selectores'
 import { Boton, BotonEnlace, Campo, Cargando, Cifra, Encabezado, Entrada, ErrorCarga, Selector, Tarjeta, Vacio } from '../componentes/ui'
+import { conConfirmacionNegativo } from '../lib/correcciones'
 import { useCatalogos } from '../lib/catalogos'
 import { useDatos } from '../lib/datos'
 import { dinero, mesActual, NOMBRE_TIPO_MOVIMIENTO, primerDiaMes, ultimoDiaMes } from '../lib/formato'
@@ -48,7 +49,8 @@ export default function Movimientos() {
     const ok = await confirmar({ titulo: 'Eliminar movimiento', mensaje: `Se eliminará "${titulo}". No se puede deshacer.`, aceptar: 'Eliminar', peligro: true })
     if (!ok) return
     try {
-      const r = await movimientos.eliminar(id)
+      const r = await conConfirmacionNegativo(confirmar, (ok) => movimientos.eliminar(id, ok))
+      if (!r) return
       setSaldo(r.saldo)
       avisar(r.mensaje)
       void pagina.recargar()

@@ -6,10 +6,22 @@ export type { Usuario } from './tipos'
 export class ErrorApi extends Error {
   estado: number
   errores: Record<string, string>
-  constructor(estado: number, mensaje: string, errores: Record<string, string> = {}) {
+  /** Caso concreto que la web puede tratar aparte (p. ej. "DISPONIBLE_NEGATIVO"). */
+  codigo?: string
+  /** Datos del caso; los montos llegan como texto decimal. */
+  datos?: Record<string, string>
+  constructor(
+    estado: number,
+    mensaje: string,
+    errores: Record<string, string> = {},
+    codigo?: string,
+    datos?: Record<string, string>,
+  ) {
     super(mensaje)
     this.estado = estado
     this.errores = errores
+    this.codigo = codigo
+    this.datos = datos
   }
 }
 
@@ -45,7 +57,7 @@ async function pedir<R>(ruta: string, opciones: RequestInit = {}): Promise<R> {
     if (r.status === 401 && !ruta.startsWith('/auth/')) {
       window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
     }
-    throw new ErrorApi(r.status, cuerpo?.detail ?? `Error ${r.status}`, cuerpo?.errores ?? {})
+    throw new ErrorApi(r.status, cuerpo?.detail ?? `Error ${r.status}`, cuerpo?.errores ?? {}, cuerpo?.codigo, cuerpo?.datos)
   }
   return cuerpo as R
 }
@@ -149,8 +161,11 @@ export const movimientos = {
   obtener: (id: number) => get<T.Movimiento>(`/movimientos/${id}`),
   crear: (f: MovimientoForm) => post<T.RespuestaConSaldo>('/movimientos', f),
   producido: (f: ProducidoForm) => post<T.RespuestaConSaldo>('/movimientos/producido', f),
-  actualizar: (id: number, f: MovimientoForm) => put<T.Movimiento>(`/movimientos/${id}`, f),
-  eliminar: (id: number) => del<T.RespuestaConSaldo>(`/movimientos/${id}`),
+  /** `confirmarNegativo`: acepta una corrección que deja el disponible negativo (D-F2, ver lib/correcciones.ts). */
+  actualizar: (id: number, f: MovimientoForm, confirmarNegativo = false) =>
+    put<T.Movimiento>(`/movimientos/${id}${confirmarNegativo ? '?confirmar_negativo=true' : ''}`, f),
+  eliminar: (id: number, confirmarNegativo = false) =>
+    del<T.RespuestaConSaldo>(`/movimientos/${id}${confirmarNegativo ? '?confirmar_negativo=true' : ''}`),
 }
 
 export const categorias = {

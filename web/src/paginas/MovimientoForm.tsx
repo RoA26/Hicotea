@@ -2,12 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { movimientos, type MovimientoForm as Form } from '../api/cliente'
 import type { TipoIngresoGasto } from '../api/tipos'
-import { useAvisar } from '../componentes/Globales'
+import { useAvisar, useConfirmar } from '../componentes/Globales'
 import { SelectorCajita, SelectorCategoria, SelectorFuente } from '../componentes/Selectores'
 import { AlertaError, Boton, Campo, Cargando, Encabezado, Entrada, EntradaMonto, ErrorCarga, Segmentos, Tarjeta } from '../componentes/ui'
 import { categoriasPara, useCatalogos, type Catalogos } from '../lib/catalogos'
 import { useDatos, useEnvio } from '../lib/datos'
 import { hoy, montoEditable } from '../lib/formato'
+import { conConfirmacionNegativo } from '../lib/correcciones'
 import { useRegistroRapido } from '../lib/registro'
 
 export default function MovimientoForm() {
@@ -46,6 +47,7 @@ function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; ca
   const editando = id !== undefined
   const navegar = useNavigate()
   const avisar = useAvisar()
+  const confirmar = useConfirmar()
   const registrado = useRegistroRapido()
   const { enviando, error, errores, enviar } = useEnvio()
   const [f, setF] = useState<Form>(inicial)
@@ -66,7 +68,7 @@ function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; ca
       id_cajita_origen: !editando && f.tipo === 'GASTO' && desdeCajita ? f.id_cajita_origen : null,
     }
     if (editando) {
-      const r = await enviar(() => movimientos.actualizar(id, datos))
+      const r = await enviar(() => conConfirmacionNegativo(confirmar, (ok) => movimientos.actualizar(id, datos, ok)))
       if (r) {
         avisar('Movimiento actualizado.')
         navegar(-1)

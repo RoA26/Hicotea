@@ -93,15 +93,19 @@ export function GraficaMeses({ datos }: { datos: { mes: string; ingresos: string
 }
 
 /** Gastos del mes por categoría: barras horizontales con etiqueta directa. */
-export function GraficaCategorias({ datos }: { datos: { categoria: string; total: string }[] }) {
+/** D-F4: cada barra es una categoría (por id); si el nombre se repite entre personal y costo, se aclara. */
+export function GraficaCategorias({ datos }: { datos: { id_categoria: number; categoria: string; tipo: string; total: string }[] }) {
+  const repetidos = new Set(datos.map((d) => d.categoria).filter((n, i, xs) => xs.indexOf(n) !== i))
+  const nombre = (d: (typeof datos)[number]) =>
+    repetidos.has(d.categoria) ? `${d.categoria} (${d.tipo === 'COSTO_OPERATIVO' ? 'costo' : 'personal'})` : d.categoria
   const max = Math.max(0, ...datos.map((d) => numero(d.total)))
   return (
     <div>
       <ul className="space-y-2.5">
         {datos.map((d) => (
-          <li key={d.categoria} title={`${d.categoria}: ${dinero(d.total)}`}>
+          <li key={d.id_categoria} title={`${nombre(d)}: ${dinero(d.total)}`}>
             <div className="mb-1 flex justify-between gap-2 text-sm">
-              <span className="truncate">{d.categoria}</span>
+              <span className="truncate">{nombre(d)}</span>
               <span className="cifra shrink-0 text-texto-suave">{dinero(d.total)}</span>
             </div>
             <div className="h-2 rounded-full bg-superficie-2">

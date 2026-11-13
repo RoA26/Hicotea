@@ -15,12 +15,14 @@ from app.modelo.enums import TipoCategoria, TipoMovimiento
 from app.repos import cajita as repo_cajita
 from app.repos import movimiento as repo
 from app.servicios import categorias, fuentes
+from app.servicios.serializacion import serializar_finanzas
 
 TAMANO_PAGINA = 30
 MENSAJE_PRODUCIDO_DUPLICADO = (
     "Ya registraste el producido de esa fuente para ese día. Si quieres cambiarlo, edítalo desde Movimientos."
 )
 NO_EDITABLE = "Este movimiento no se puede editar; elimínalo y regístralo de nuevo."
+CODIGO_DISPONIBLE_NEGATIVO = "DISPONIBLE_NEGATIVO"
 
 
 # ------------------------------------------------------------------ consultas
@@ -92,6 +94,7 @@ def buscar(
 
 
 def registrar_producido(con: Connection, id_usuario: int, form: ProducidoForm) -> int:
+    serializar_finanzas(con, id_usuario)
     fuentes.obtener_activa(con, id_usuario, form.id_fuente)
     _validar_fecha(form.fecha, "fecha")
     cat_ingreso = _validar_categoria(
@@ -125,6 +128,9 @@ def registrar_producido(con: Connection, id_usuario: int, form: ProducidoForm) -
 
 
 def registrar(con: Connection, id_usuario: int, form: MovimientoForm) -> int:
+    """También lo usan recurrentes y atajos: la fecha que llega es la fecha
+    efectiva del movimiento (puede ser pasada, nunca futura)."""
+    serializar_finanzas(con, id_usuario)
     m = validar(con, id_usuario, form)
     cajita_origen = None
     if m["tipo"] == TipoMovimiento.GASTO and form.id_cajita_origen is not None:
@@ -146,7 +152,10 @@ def registrar(con: Connection, id_usuario: int, form: MovimientoForm) -> int:
     return id_movimiento
 
 
-def actualizar(con: Connection, id_usuario: int, id_movimiento: int, form: MovimientoForm) -> dict:
+def actualizar(
+    con: Connection, id_usuario: int, id_movimiento: int, form: MovimientoForm, confirmar_negativo: bool = False
+) -> dict:
+    serializar_finanzas(con, id_usuario)
     existente = obtener(con, id_usuario, id_movimiento)
     if not existente["editable"]:
         raise ReglaNegocio(NO_EDITABLE)
@@ -158,8 +167,14 @@ def actualizar(con: Connection, id_usuario: int, id_movimiento: int, form: Movim
         cajita = repo_cajita.buscar(con, id_usuario, retiro["id_cajita"])
         if cajita is None:
             raise NoEncontrado("Cajita no encontrada")
+        if not cajita["activa"] and nuevo["monto"] != retiro["monto"]:
+            # D-F1: cambiar el monto movería el saldo de una cajita desactivada.
+            raise ReglaNegocio(_mensaje_cajita_inactiva(cajita["nombre"], "cambiar el monto de este gasto"), "monto")
         # El monto anterior vuelve a estar disponible en la cajita para la validación.
         _validar_saldo_suficiente(cajita, cajita["saldo"] + retiro["monto"], nuevo["monto"], "monto")
+    elif existente["tipo"] == TipoMovimiento.INGRESO:
+        # D-F2: rebajar un ingreso es una corrección histórica que puede dejar el disponible negativo.
+        _validar_correccion(con, id_usuario, nuevo["monto"] - existente["monto"], confirmar_negativo)
     try:
         with con.begin_nested():
             repo.actualizar(con, id_usuario, id_movimiento, nuevo)
@@ -170,10 +185,22 @@ def actualizar(con: Connection, id_usuario: int, id_movimiento: int, form: Movim
     return obtener(con, id_usuario, id_movimiento)
 
 
-def eliminar(con: Connection, id_usuario: int, id_movimiento: int) -> None:
+def eliminar(con: Connection, id_usuario: int, id_movimiento: int, confirmar_negativo: bool = False) -> None:
+    serializar_finanzas(con, id_usuario)
     m = obtener(con, id_usuario, id_movimiento)
     if not m["eliminable"]:
         raise ReglaNegocio("Este retiro pagó un gasto: elimina el gasto y el retiro se eliminará con él.")
+    # D-F1: nada que toque una cajita desactivada (sus operaciones, o el retiro
+    # enlazado a un gasto pagado desde ella) puede volver a crearle saldo.
+    id_cajita = m["id_cajita"] or m["id_cajita_origen"]
+    if id_cajita is not None:
+        cajita = repo_cajita.buscar(con, id_usuario, id_cajita)
+        if cajita is not None and not cajita["activa"]:
+            raise ReglaNegocio(_mensaje_cajita_inactiva(cajita["nombre"], "eliminar este movimiento"))
+    # D-F2: efecto de la eliminación sobre el disponible.
+    tipo = TipoMovimiento(m["tipo"])
+    if tipo == TipoMovimiento.INGRESO or (tipo == TipoMovimiento.RETIRO and m["id_relacionado"] is None):
+        _validar_correccion(con, id_usuario, -m["monto"], confirmar_negativo)
     if m["tipo"] in (TipoMovimiento.APORTE, TipoMovimiento.RENDIMIENTO, TipoMovimiento.SALDO_INICIAL):
         saldo = repo_cajita.saldo(con, id_usuario, m["id_cajita"])
         if saldo - m["monto"] < 0:
@@ -252,6 +279,35 @@ def _validar_fecha(fecha: date | None, campo: str) -> None:
         raise ReglaNegocio("Elige la fecha.", campo)
     if fecha > reloj.hoy():
         raise ReglaNegocio("La fecha no puede ser futura.", campo)
+
+
+def _mensaje_cajita_inactiva(nombre: str, accion: str) -> str:
+    return f"La cajita {nombre} está desactivada. Actívala para {accion}; así su saldo no queda escondido."
+
+
+def _validar_correccion(con: Connection, id_usuario: int, efecto: Decimal, confirmado: bool) -> None:
+    """D-F2: una corrección histórica (eliminar o rebajar un ingreso, eliminar
+    un retiro) puede dejar el disponible negativo, porque ese dinero ya se
+    repartió a las cajitas. Se permite, pero solo con confirmación explícita.
+    No se crea ningún movimiento compensatorio."""
+    if efecto >= 0 or confirmado:
+        return
+    actual = repo.disponible(con, id_usuario)
+    resultante = actual + efecto
+    if resultante >= 0:
+        return
+    faltante = -resultante
+    raise ReglaNegocio(
+        f"Con esta corrección tu disponible queda en {dinero.formatear(resultante)}: ese dinero ya está en tus "
+        f"cajitas. Puedes continuar y luego retirar {dinero.formatear(faltante)} de una cajita para equilibrarlo.",
+        estado=409,
+        codigo=CODIGO_DISPONIBLE_NEGATIVO,
+        datos={
+            "disponible_actual": str(actual.quantize(dinero.CENTAVOS)),
+            "disponible_resultante": str(resultante.quantize(dinero.CENTAVOS)),
+            "faltante": str(faltante.quantize(dinero.CENTAVOS)),
+        },
+    )
 
 
 def _validar_saldo_suficiente(cajita: dict, saldo_disponible: Decimal, monto: Decimal, campo: str) -> None:

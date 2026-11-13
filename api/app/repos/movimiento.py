@@ -202,10 +202,11 @@ def totales_por_mes(con: Connection, id_usuario: int, desde: date, hasta: date) 
 def gastos_por_categoria(con: Connection, id_usuario: int, desde: date, hasta: date) -> list[dict]:
     return todos(
         con,
-        """SELECT c.nombre AS categoria, SUM(m.monto) AS total
+        # D-F4: se agrupa por id; dos categorías con el mismo nombre (una personal y un costo) no se mezclan.
+        """SELECT c.id AS id_categoria, c.nombre AS categoria, c.tipo, SUM(m.monto) AS total
            FROM movimiento m JOIN categoria c ON c.id = m.id_categoria
            WHERE m.id_usuario = :u AND m.tipo = 'GASTO' AND m.fecha BETWEEN :desde AND :hasta
-           GROUP BY c.nombre ORDER BY total DESC""",
+           GROUP BY c.id, c.nombre, c.tipo ORDER BY total DESC, c.nombre, c.id""",
         u=id_usuario,
         desde=desde,
         hasta=hasta,
@@ -215,14 +216,18 @@ def gastos_por_categoria(con: Connection, id_usuario: int, desde: date, hasta: d
 def resumen_por_fuente(con: Connection, id_usuario: int, desde: date, hasta: date) -> list[dict]:
     return todos(
         con,
-        """SELECT f.id AS id_fuente, f.nombre,
+        # D-F4: una fuente desactivada sigue apareciendo en los periodos en que tuvo movimientos.
+        """SELECT f.id AS id_fuente, f.nombre, f.activa,
                   COALESCE(SUM(m.monto) FILTER (WHERE m.tipo = 'INGRESO'), 0) AS bruto,
                   COALESCE(SUM(m.monto) FILTER (WHERE m.tipo = 'GASTO'), 0) AS costos,
                   COUNT(DISTINCT m.fecha) FILTER (WHERE m.tipo = 'INGRESO') AS dias_trabajados
            FROM fuente_ingreso f
-           LEFT JOIN movimiento m ON m.id_fuente = f.id AND m.fecha BETWEEN :desde AND :hasta
-           WHERE f.id_usuario = :u AND f.activa
-           GROUP BY f.id, f.nombre ORDER BY f.nombre""",
+           LEFT JOIN movimiento m ON m.id_fuente = f.id AND m.id_usuario = :u
+                                 AND m.fecha BETWEEN :desde AND :hasta
+           WHERE f.id_usuario = :u
+           GROUP BY f.id, f.nombre, f.activa
+           HAVING f.activa OR COUNT(m.id) > 0
+           ORDER BY f.activa DESC, f.nombre""",
         u=id_usuario,
         desde=desde,
         hasta=hasta,

@@ -2,6 +2,7 @@
 
 Todas las respuestas de error tienen la forma:
     {"detail": "mensaje para mostrar", "errores": {"campo": "mensaje"}}
+y, cuando aplica, "codigo" (str) y "datos" (dict de textos).
 """
 
 from fastapi import FastAPI, Request
@@ -12,11 +13,22 @@ from fastapi.responses import JSONResponse
 class ReglaNegocio(Exception):
     """Una regla de negocio no se cumple. `campo` indica qué dato del formulario corregir."""
 
-    def __init__(self, mensaje: str, campo: str | None = None, estado: int = 422):
+    def __init__(
+        self,
+        mensaje: str,
+        campo: str | None = None,
+        estado: int = 422,
+        codigo: str | None = None,
+        datos: dict[str, str] | None = None,
+    ):
         super().__init__(mensaje)
         self.mensaje = mensaje
         self.campo = campo
         self.estado = estado
+        # `codigo` permite a la web reaccionar a un caso concreto (p. ej. pedir
+        # confirmación); `datos` lleva montos como texto decimal, igual que la API.
+        self.codigo = codigo
+        self.datos = datos
 
 
 class NoEncontrado(Exception):
@@ -29,7 +41,12 @@ def registrar_manejadores(app: FastAPI) -> None:
     @app.exception_handler(ReglaNegocio)
     async def _regla(_: Request, e: ReglaNegocio):
         errores = {e.campo: e.mensaje} if e.campo else {}
-        return JSONResponse({"detail": e.mensaje, "errores": errores}, status_code=e.estado)
+        cuerpo: dict = {"detail": e.mensaje, "errores": errores}
+        if e.codigo:
+            cuerpo["codigo"] = e.codigo
+        if e.datos:
+            cuerpo["datos"] = e.datos
+        return JSONResponse(cuerpo, status_code=e.estado)
 
     @app.exception_handler(NoEncontrado)
     async def _no_encontrado(_: Request, e: NoEncontrado):
