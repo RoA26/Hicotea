@@ -59,7 +59,7 @@ export function Campo({
   children,
   className,
 }: {
-  etiqueta: string
+  etiqueta: ReactNode
   error?: string
   ayuda?: ReactNode
   children: ReactNode
