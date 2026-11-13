@@ -18,7 +18,7 @@ const VARIANTES: Record<Variante, string> = {
 
 const claseBoton = (v: Variante, chico?: boolean) =>
   cx(
-    'inline-flex items-center justify-center gap-2 rounded-xl transition-[filter,background-color,border-color,color] select-none',
+    'inline-flex items-center justify-center gap-2 rounded-control transition-[filter,background-color,border-color,color] select-none',
     'disabled:opacity-50 disabled:pointer-events-none',
     chico ? 'h-9 px-3 text-sm' : 'h-11 px-4',
     VARIANTES[v],
@@ -79,7 +79,7 @@ export function Campo({
 }
 
 const claseEntrada =
-  'block w-full h-11 rounded-xl bg-superficie-2 border border-borde px-3 text-texto placeholder:text-texto-suave/60 focus:border-acento focus:outline-none aria-invalid:border-gasto'
+  'block w-full h-11 rounded-control bg-superficie-2 border border-borde px-3 text-texto placeholder:text-texto-suave/60 focus:border-acento focus:outline-none aria-invalid:border-gasto'
 
 export function Entrada({ className, ...p }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cx(claseEntrada, className)} {...p} />
@@ -130,7 +130,7 @@ export function Segmentos<T extends string>({
   onCambio: (v: T) => void
 }) {
   return (
-    <div role="radiogroup" className="grid auto-cols-fr grid-flow-col gap-1 rounded-xl border border-borde bg-superficie-2 p-1">
+    <div role="radiogroup" className="grid auto-cols-fr grid-flow-col gap-1 rounded-control border border-borde bg-superficie-2 p-1">
       {opciones.map((o) => {
         const activo = o.valor === valor
         return (
@@ -157,10 +157,24 @@ export function Segmentos<T extends string>({
   )
 }
 
+/**
+ * C-03: deja claro antes de confirmar que se registra en un día que no es hoy.
+ * No se muestra para hoy, que es el caso normal.
+ */
+export function AvisoFecha({ fecha, hoy, texto }: { fecha: string; hoy: string; texto: (fecha: string) => string }) {
+  if (!fecha || fecha === hoy) return null
+  return (
+    <p className="rounded-control border border-acento/30 bg-acento/10 px-3 py-2 text-sm" role="status" aria-live="polite">
+      Vas a registrar con fecha del <strong className="font-semibold">{texto(fecha)}</strong>
+      {fecha > hoy ? ' (es una fecha futura: no se podrá guardar).' : ', no de hoy.'}
+    </p>
+  )
+}
+
 export function AlertaError({ mensaje }: { mensaje: string | null }) {
   if (!mensaje) return null
   return (
-    <p role="alert" className="rounded-xl border border-gasto/30 bg-gasto/10 px-3 py-2 text-sm text-gasto">
+    <p role="alert" className="rounded-control border border-gasto/30 bg-gasto/10 px-3 py-2 text-sm text-gasto">
       {mensaje}
     </p>
   )
@@ -169,7 +183,7 @@ export function AlertaError({ mensaje }: { mensaje: string | null }) {
 export function AlertaExito({ mensaje }: { mensaje: string | null }) {
   if (!mensaje) return null
   return (
-    <p role="status" className="rounded-xl border border-acento/30 bg-acento/10 px-3 py-2 text-sm text-acento">
+    <p role="status" className="rounded-control border border-acento/30 bg-acento/10 px-3 py-2 text-sm text-acento">
       {mensaje}
     </p>
   )
@@ -179,7 +193,7 @@ export function AlertaExito({ mensaje }: { mensaje: string | null }) {
 
 export function Tarjeta({ className, children, ...p }: { className?: string; children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cx('rounded-2xl border border-borde bg-superficie p-4', className)} {...p}>
+    <div className={cx('rounded-tarjeta border border-borde bg-superficie p-4 shadow-tarjeta', className)} {...p}>
       {children}
     </div>
   )
@@ -211,7 +225,7 @@ export function Seccion({ titulo, acciones, children }: { titulo: string; accion
 
 export function Vacio({ children, accion }: { children: ReactNode; accion?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-borde px-4 py-8 text-center text-sm text-texto-suave">
+    <div className="rounded-tarjeta border border-dashed border-borde px-4 py-8 text-center text-sm text-texto-suave">
       <p>{children}</p>
       {accion && <div className="mt-4">{accion}</div>}
     </div>
@@ -222,7 +236,7 @@ export function Cargando() {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Cargando">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-16 animate-pulse rounded-2xl bg-superficie" />
+        <div key={i} className="h-16 animate-pulse rounded-tarjeta bg-superficie" />
       ))}
     </div>
   )
@@ -230,7 +244,7 @@ export function Cargando() {
 
 export function ErrorCarga({ error, reintentar }: { error: ErrorApi; reintentar: () => void }) {
   return (
-    <div className="rounded-2xl border border-gasto/30 bg-gasto/5 p-4 text-sm">
+    <div className="rounded-tarjeta border border-gasto/30 bg-gasto/5 p-4 text-sm">
       <p className="text-gasto">{error.message}</p>
       <Boton chico variante="secundario" className="mt-3" onClick={reintentar}>
         Reintentar
@@ -258,10 +272,10 @@ export function Monto({
   return <span className={cx('cifra whitespace-nowrap', tono, className)}>{prefijo}{dinero(valor)}</span>
 }
 
-export function Barra({ porcentaje, tono = 'acento' }: { porcentaje: number; tono?: 'acento' | 'aviso' | 'gasto' }) {
+export function Barra({ porcentaje, tono = 'acento', etiqueta }: { porcentaje: number; tono?: 'acento' | 'aviso' | 'gasto'; etiqueta?: string }) {
   const color = { acento: 'bg-acento', aviso: 'bg-aviso', gasto: 'bg-gasto' }[tono]
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-superficie-2" role="progressbar" aria-valuenow={porcentaje} aria-valuemin={0} aria-valuemax={100}>
+    <div className="h-2 overflow-hidden rounded-full bg-superficie-2" role="progressbar" aria-label={etiqueta} aria-valuenow={porcentaje} aria-valuemin={0} aria-valuemax={100}>
       <div className={cx('h-full rounded-full', color)} style={{ width: `${Math.min(100, Math.max(0, porcentaje))}%` }} />
     </div>
   )
@@ -274,7 +288,7 @@ export function Insignia({ children, tono = 'suave' }: { children: ReactNode; to
     aviso: 'bg-aviso/10 text-aviso border-aviso/30',
     gasto: 'bg-gasto/10 text-gasto border-gasto/30',
   }[tono]
-  return <span className={cx('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', t)}>{children}</span>
+  return <span className={cx('inline-flex items-center rounded-insignia border px-2 py-0.5 text-xs font-medium', t)}>{children}</span>
 }
 
 export function Cifra({ etiqueta, valor, tono, grande }: { etiqueta: string; valor: string; tono?: 'ingreso' | 'gasto'; grande?: boolean }) {

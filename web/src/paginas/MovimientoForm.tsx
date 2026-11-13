@@ -4,10 +4,10 @@ import { movimientos, type MovimientoForm as Form } from '../api/cliente'
 import type { TipoIngresoGasto } from '../api/tipos'
 import { useAvisar, useConfirmar } from '../componentes/Globales'
 import { SelectorCajita, SelectorCategoria, SelectorFuente } from '../componentes/Selectores'
-import { AlertaError, Boton, Campo, Cargando, Encabezado, Entrada, EntradaMonto, ErrorCarga, Segmentos, Tarjeta } from '../componentes/ui'
+import { AlertaError, AvisoFecha, Boton, Campo, Cargando, Encabezado, Entrada, EntradaMonto, ErrorCarga, Segmentos, Tarjeta } from '../componentes/ui'
 import { categoriasPara, useCatalogos, type Catalogos } from '../lib/catalogos'
 import { useDatos, useEnvio } from '../lib/datos'
-import { hoy, montoEditable } from '../lib/formato'
+import { fechaDia, fechaPrecargada, hoy, montoEditable, rutaVolver } from '../lib/formato'
 import { conConfirmacionNegativo } from '../lib/correcciones'
 import { useRegistroRapido } from '../lib/registro'
 
@@ -33,17 +33,17 @@ export default function MovimientoForm() {
       }
     : {
         tipo: q.get('tipo') === 'GASTO' ? 'GASTO' : 'INGRESO',
-        fecha: hoy(),
+        fecha: fechaPrecargada(q.get('fecha')), // C-03: registro retrospectivo desde el calendario
         monto: '',
         id_categoria: null,
         id_fuente: null,
         id_cajita_origen: null,
         descripcion: '',
       }
-  return <Formulario key={id ?? 'nuevo'} id={m?.id} inicial={inicial} catalogos={cat.datos} />
+  return <Formulario key={id ?? 'nuevo'} id={m?.id} inicial={inicial} catalogos={cat.datos} volver={rutaVolver(q.get('volver'))} />
 }
 
-function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; catalogos: Catalogos }) {
+function Formulario({ id, inicial, catalogos, volver }: { id?: number; inicial: Form; catalogos: Catalogos; volver: string | null }) {
   const editando = id !== undefined
   const navegar = useNavigate()
   const avisar = useAvisar()
@@ -77,7 +77,7 @@ function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; ca
       const r = await enviar(() => movimientos.crear(datos))
       if (r) {
         registrado(r)
-        navegar('/movimientos')
+        navegar(volver ?? '/movimientos')
       }
     }
   }
@@ -105,6 +105,7 @@ function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; ca
               <Entrada type="date" value={f.fecha} max={hoy()} onChange={(e) => pon({ fecha: e.target.value })} aria-invalid={!!errores.fecha || undefined} required />
             </Campo>
           </div>
+          <AvisoFecha fecha={f.fecha} hoy={hoy()} texto={fechaDia} />
           <Campo etiqueta="Categoría" error={errores.id_categoria}>
             <SelectorCategoria categorias={opciones} valor={f.id_categoria} onCambio={(id_categoria) => pon({ id_categoria })} invalido={!!errores.id_categoria} />
           </Campo>
@@ -124,7 +125,7 @@ function Formulario({ id, inicial, catalogos }: { id?: number; inicial: Form; ca
             </Campo>
           )}
           {!editando && f.tipo === 'GASTO' && cajitas.some((c) => c.activa) && (
-            <div className="rounded-xl border border-borde p-3">
+            <div className="rounded-control border border-borde p-3">
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={desdeCajita} onChange={(e) => setDesdeCajita(e.target.checked)} className="size-4 accent-[var(--acento)]" />
                 Pagar con plata de una cajita

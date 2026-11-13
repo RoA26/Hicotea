@@ -4,9 +4,10 @@ from datetime import date
 
 from fastapi import APIRouter, status
 
-from app.esquemas.entradas import AtajoForm, MovimientoForm, ProducidoForm
+from app.esquemas.entradas import AtajoForm, MovimientoForm, ProducidoForm, UsoAtajoForm
 from app.esquemas.salidas import (
     AtajoOut,
+    DiaSinActividadOut,
     MesCalendario,
     MovimientoOut,
     PaginaMovimientos,
@@ -17,7 +18,7 @@ from app.esquemas.salidas import (
 from app.modelo import dinero, reloj
 from app.modelo.enums import TipoMovimiento
 from app.seguridad.dependencias import Con, IdUsuario
-from app.servicios import atajos, movimientos, tablero
+from app.servicios import atajos, dias, movimientos, tablero
 
 router = APIRouter(prefix="/api", tags=["movimientos"])
 
@@ -96,8 +97,9 @@ def eliminar_atajo(id_atajo: int, u: IdUsuario, con: Con):
 
 
 @router.post("/atajos/{id_atajo}/usar", response_model=RespuestaConSaldo)
-def usar_atajo(id_atajo: int, u: IdUsuario, con: Con):
-    atajo, id_movimiento = atajos.usar(con, u, id_atajo)
+def usar_atajo(id_atajo: int, u: IdUsuario, con: Con, form: UsoAtajoForm | None = None):
+    """Cuerpo opcional `{"fecha": "YYYY-MM-DD"}` para registrar en un día pasado (C-03)."""
+    atajo, id_movimiento = atajos.usar(con, u, id_atajo, form.fecha if form else None)
     signo = "+ " if atajo["tipo"] == TipoMovimiento.INGRESO else "− "
     return con_saldo(con, u, f"{atajo['nombre']} · {signo}{dinero.formatear(atajo['monto'])}", id_movimiento, atajo["tipo"])
 
@@ -113,6 +115,18 @@ def ver_tablero(u: IdUsuario, con: Con):
 @router.get("/saldo", response_model=Saldo)
 def ver_saldo(u: IdUsuario, con: Con):
     return tablero.saldo(con, u)
+
+
+@router.put("/dias-sin-actividad/{fecha}", response_model=DiaSinActividadOut)
+def marcar_dia_sin_actividad(fecha: date, u: IdUsuario, con: Con):
+    """C-04: confirma que ese día no tuvo actividad. Idempotente; no crea movimientos."""
+    return dias.marcar(con, u, fecha)
+
+
+@router.delete("/dias-sin-actividad/{fecha}", response_model=DiaSinActividadOut)
+def quitar_dia_sin_actividad(fecha: date, u: IdUsuario, con: Con):
+    """Deshace la confirmación (idempotente)."""
+    return dias.quitar(con, u, fecha)
 
 
 @router.get("/calendario", response_model=MesCalendario)

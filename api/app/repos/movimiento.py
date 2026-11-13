@@ -142,6 +142,32 @@ def listar_por_cajita(con: Connection, id_usuario: int, id_cajita: int, cantidad
     )
 
 
+def listar_de_cajitas(con: Connection, id_usuario: int, cantidad: int) -> list[dict]:
+    return todos(
+        con,
+        SELECT_DETALLE + "WHERE m.id_usuario = :u AND m.id_cajita IS NOT NULL ORDER BY m.fecha DESC, m.id DESC LIMIT :n",
+        u=id_usuario,
+        n=cantidad,
+    )
+
+
+def primera_fecha_con_saldo(con: Connection, id_usuario: int, id_cajita: int, objetivo: Decimal) -> date | None:
+    """Primera fecha en que el saldo acumulado de la cajita (orden fecha, id) llegó a `objetivo`.
+    Solo lee: se usa para fechar un logro sin tocar movimientos."""
+    return valor(
+        con,
+        """SELECT fecha FROM (
+               SELECT fecha, SUM(CASE WHEN tipo IN ('APORTE', 'RENDIMIENTO', 'SALDO_INICIAL') THEN monto
+                                      WHEN tipo = 'RETIRO' THEN -monto ELSE 0 END)
+                          OVER (ORDER BY fecha, id) AS acumulado
+               FROM movimiento WHERE id_usuario = :u AND id_cajita = :c
+           ) t WHERE acumulado >= :obj ORDER BY fecha LIMIT 1""",
+        u=id_usuario,
+        c=id_cajita,
+        obj=objetivo,
+    )
+
+
 def disponible(con: Connection, id_usuario: int) -> Decimal:
     return valor(
         con,
@@ -171,17 +197,31 @@ def resumen(con: Connection, id_usuario: int, desde: date, hasta: date) -> dict:
 def totales_por_dia(con: Connection, id_usuario: int, desde: date, hasta: date) -> list[dict]:
     return todos(
         con,
+        # Una sola consulta agregada por intervalo (calendario y gráficas, sin N+1).
+        # Las operaciones de ahorro son flujos internos (disponible ↔ cajitas): van aparte de
+        # ingresos y gastos. El retiro que paga un gasto no cuenta como operación: es parte del gasto.
         """SELECT fecha,
                   COALESCE(SUM(monto) FILTER (WHERE tipo = 'INGRESO'), 0) AS ingresos,
                   COALESCE(SUM(monto) FILTER (WHERE tipo = 'GASTO'), 0) AS gastos,
-                  COALESCE(SUM(monto) FILTER (WHERE tipo = 'INGRESO' AND id_fuente IS NOT NULL), 0) AS producido
+                  COALESCE(SUM(monto) FILTER (WHERE tipo = 'INGRESO' AND id_fuente IS NOT NULL), 0) AS producido,
+                  COALESCE(SUM(monto) FILTER (WHERE tipo = 'APORTE'), 0) AS aportes,
+                  COALESCE(SUM(monto) FILTER (WHERE tipo = 'RETIRO' AND id_relacionado IS NULL), 0) AS retiros,
+                  COALESCE(SUM(monto) FILTER (WHERE tipo IN ('RENDIMIENTO', 'SALDO_INICIAL')), 0) AS rendimientos,
+                  COUNT(*) FILTER (WHERE tipo NOT IN ('INGRESO', 'GASTO') AND id_relacionado IS NULL)
+                      AS operaciones_ahorro,
+                  COUNT(*) FILTER (WHERE id_relacionado IS NULL) AS registros
            FROM movimiento
-           WHERE id_usuario = :u AND tipo IN ('INGRESO', 'GASTO') AND fecha BETWEEN :desde AND :hasta
+           WHERE id_usuario = :u AND fecha BETWEEN :desde AND :hasta
            GROUP BY fecha ORDER BY fecha""",
         u=id_usuario,
         desde=desde,
         hasta=hasta,
     )
+
+
+def primera_fecha(con: Connection, id_usuario: int) -> date | None:
+    """Comienzo del historial financiero del usuario (fecha de su primer movimiento)."""
+    return valor(con, "SELECT MIN(fecha) FROM movimiento WHERE id_usuario = :u", u=id_usuario)
 
 
 def totales_por_mes(con: Connection, id_usuario: int, desde: date, hasta: date) -> list[dict]:
@@ -231,4 +271,14 @@ def resumen_por_fuente(con: Connection, id_usuario: int, desde: date, hasta: dat
         u=id_usuario,
         desde=desde,
         hasta=hasta,
+    )
+
+
+def registros_del_dia(con: Connection, id_usuario: int, fecha: date) -> int:
+    """Movimientos visibles de un día (sin contar el retiro que paga un gasto)."""
+    return valor(
+        con,
+        "SELECT COUNT(*) FROM movimiento WHERE id_usuario = :u AND fecha = :f AND id_relacionado IS NULL",
+        u=id_usuario,
+        f=fecha,
     )

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { cajitas as api, ErrorApi } from '../api/cliente'
 import type { Cajita, PropuestaReparto } from '../api/tipos'
 import { useAvisar, useSaldo } from '../componentes/Globales'
@@ -90,7 +90,7 @@ export default function Reparto() {
     if (r) {
       avisar(r.mensaje)
       avisarCambio()
-      navegar('/cajitas')
+      navegar('/caparazon')
     }
   }
 
@@ -98,7 +98,14 @@ export default function Reparto() {
     <>
       <Encabezado
         titulo="Repartir"
-        subtitulo="Distribuye lo disponible entre tus cajitas según sus porcentajes."
+        subtitulo={
+          <span className="flex flex-col gap-1">
+            <Link to="/caparazon" className="text-sm text-acento hover:underline">
+              ← Caparazón
+            </Link>
+            <span>Distribuye lo disponible entre las cajitas de tu caparazón según sus porcentajes.</span>
+          </span>
+        }
       />
       <div className="grid gap-6 md:grid-cols-2">
         <Tarjeta className="h-fit space-y-4">
@@ -128,7 +135,7 @@ export default function Reparto() {
           </p>
 
           {propuesta.porcentajes_incompletos && !propuesta.hay_resto && (
-            <p className="rounded-xl border border-aviso/30 bg-aviso/10 px-3 py-2 text-xs text-aviso">
+            <p className="rounded-control border border-aviso/30 bg-aviso/10 px-3 py-2 text-xs text-aviso">
               Los porcentajes de tus cajitas suman {formatoPorcentaje(propuesta.suma_porcentajes)} y ninguna cajita recibe el resto: sobran {dinero(propuesta.sobrante)}, que se quedan en el disponible.
             </p>
           )}
@@ -180,7 +187,7 @@ export default function Reparto() {
                 )
               })}
 
-              <dl className="space-y-1.5 rounded-xl border border-borde bg-superficie-2 px-3 py-2.5 text-sm" aria-live="polite">
+              <dl className="space-y-1.5 rounded-control border border-borde bg-superficie-2 px-3 py-2.5 text-sm" aria-live="polite">
                 <div className="flex justify-between gap-3">
                   <dt className="text-texto-suave">Asignado</dt>
                   <dd className={cx('cifra font-semibold', excedeDisponible && 'text-gasto')}>{dinero(sumaLineas)}</dd>
@@ -192,7 +199,7 @@ export default function Reparto() {
               </dl>
 
               {excedeDisponible && (
-                <p className="rounded-xl border border-gasto/30 bg-gasto/10 px-3 py-2 text-xs text-gasto" role="alert">
+                <p className="rounded-control border border-gasto/30 bg-gasto/10 px-3 py-2 text-xs text-gasto" role="alert">
                   La suma del reparto ({dinero(sumaLineas)}) supera lo disponible ({dinero(propuesta.disponible)}). Reduce los montos antes de continuar.
                 </p>
               )}

@@ -108,6 +108,7 @@ export type RespuestaConSaldo = {
 export type Cajita = {
   id: number
   nombre: string
+  descripcion: string | null
   proposito: PropositoCajita
   porcentaje: Monto
   es_resto: boolean
@@ -142,6 +143,12 @@ export type Meta = {
   aporte_mensual: Monto | null
   cumplida: boolean
   vencida: boolean
+  cajita_activa: boolean
+  /** Fecha en que el usuario reconoció el logro. */
+  cumplida_en: string | null
+  /** Primera fecha en que el saldo de la cajita llegó al objetivo (según el historial). */
+  alcanzada_en: string | null
+  monto_logrado: Monto | null
 }
 
 export type Presupuesto = {
@@ -213,6 +220,8 @@ export type Tablero = {
   total_cajitas: Monto
   saldo_total: Monto
   cajitas_inactivas_con_saldo: CajitaInactivaConSaldo[]
+  /** C-05: ayer, dentro del historial, sin registros y sin confirmar. */
+  ayer_sin_registros: boolean
   mes_actual: ResumenPeriodo
   mes_anterior: ResumenPeriodo
   cajitas: Cajita[]
@@ -229,12 +238,27 @@ export type Tablero = {
   metas: Meta[]
 }
 
+export type CompromisoPrevisto = { id: number; nombre: string; tipo: TipoIngresoGasto; monto: Monto }
+
+/** Calendario vivo (C-01): los estados pueden coexistir. */
 export type DiaCalendario = {
   fecha: string
   del_mes: boolean
   hoy: boolean
+  futuro: boolean
   ingresos: Monto
   gastos: Monto
+  /** Operaciones de ahorro: flujos internos disponible ↔ cajitas, no ingresos ni gastos. */
+  aportes: Monto
+  retiros: Monto
+  rendimientos: Monto
+  operaciones_ahorro: number
+  registros: number
+  /** Pasado, desde el comienzo del historial, sin ningún registro. No es un error. */
+  sin_registros: boolean
+  /** Confirmado por el usuario como día sin actividad (C-04). Un movimiento real tiene prioridad. */
+  sin_actividad: boolean
+  compromisos: CompromisoPrevisto[]
   con_producido: boolean
   sin_producido: boolean
 }
@@ -248,6 +272,8 @@ export type MesCalendario = {
   total_gastos: Monto
   dias_con_producido: number
   dias_sin_producido: number
+  hoy: string
+  inicio_historial: string | null
 }
 
 export type FiltroMovimientos = {

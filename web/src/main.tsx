@@ -8,15 +8,15 @@ import '@fontsource/plus-jakarta-sans/latin-800.css'
 import './index.css'
 import Atajos from './paginas/Atajos'
 import CajitaDetalle from './paginas/CajitaDetalle'
-import Cajitas from './paginas/Cajitas'
+import Caparazon from './paginas/Caparazon'
 import Calendario from './paginas/Calendario'
 import Compartido from './paginas/Compartido'
 import Compartir from './paginas/Compartir'
 import Fuentes from './paginas/Fuentes'
+import HistorialAhorro from './paginas/HistorialAhorro'
 import Inicio from './paginas/Inicio'
 import Landing from './paginas/Landing'
 import Login from './paginas/Login'
-import Metas from './paginas/Metas'
 import MovimientoForm from './paginas/MovimientoForm'
 import Movimientos from './paginas/Movimientos'
 import Presupuestos from './paginas/Presupuestos'
@@ -27,9 +27,9 @@ import Recurrentes from './paginas/Recurrentes'
 import Registro from './paginas/Registro'
 import Reparto from './paginas/Reparto'
 import Restablecer from './paginas/Restablecer'
-import { aplicarTema, temaGuardado } from './tema/tema'
+import { aplicarPreferenciasGuardadas } from './tema/tema'
 
-aplicarTema(temaGuardado())
+aplicarPreferenciasGuardadas()
 
 function Espera() {
   return (
@@ -77,10 +77,13 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="/producido" element={<Producido />} />
                   <Route path="/calendario" element={<Calendario />} />
                   <Route path="/fuentes" element={<Fuentes />} />
-                  <Route path="/cajitas" element={<Cajitas />} />
+                  {/* Caparazón reúne cajitas y metas; /cajitas y /metas redirigen para no romper enlaces viejos. */}
+                  <Route path="/caparazon" element={<Caparazon />} />
+                  <Route path="/caparazon/historial" element={<HistorialAhorro />} />
+                  <Route path="/cajitas" element={<Navigate to="/caparazon" replace />} />
                   <Route path="/cajitas/reparto" element={<Reparto />} />
                   <Route path="/cajitas/:id" element={<CajitaDetalle />} />
-                  <Route path="/metas" element={<Metas />} />
+                  <Route path="/metas" element={<Navigate to="/caparazon" replace />} />
                   <Route path="/presupuestos" element={<Presupuestos />} />
                   <Route path="/recurrentes" element={<Recurrentes />} />
                   <Route path="/recurrentes/nuevo" element={<RecurrenteForm />} />

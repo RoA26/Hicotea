@@ -9,7 +9,8 @@ from sqlalchemy import Connection
 from app.modelo import calculos, reloj
 from app.modelo.enums import Frecuencia
 from app.repos import movimiento as repo_mov
-from app.servicios import cajitas, fuentes, metas, movimientos, presupuestos, recurrentes
+from app.repos import otros as repo_otros
+from app.servicios import cajitas, dias, fuentes, metas, movimientos, presupuestos, recurrentes
 
 MESES_EN_GRAFICA = 6
 
@@ -73,6 +74,7 @@ def construir(con: Connection, id_usuario: int) -> dict:
         "graficas": _graficas(con, id_usuario, hoy),
         "pendientes": recurrentes.pendientes(con, id_usuario),
         "alertas_presupuesto": presupuestos.alertas_del_mes(con, id_usuario),
+        "ayer_sin_registros": dias.ayer_sin_registros(con, id_usuario),
         "metas": metas.listar_activas(con, id_usuario),
     }
 
@@ -109,13 +111,23 @@ def _graficas(con: Connection, id_usuario: int, hoy: date) -> dict:
 
 
 def calendario(con: Connection, id_usuario: int, anio: int, mes: int) -> dict:
-    """Calendario mensual de ingresos. Marca los días en que entró dinero y,
-    si hay una fuente diaria activa, los días pasados sin producido."""
+    """Calendario vivo (C-01). Por día: ingresos y gastos reales, operaciones de
+    ahorro aparte (flujos internos), días pasados sin registros, compromisos
+    previstos y días futuros. Los estados pueden coexistir.
+
+    Un día pasado sin registros **no es un error**: solo se marca desde el
+    comienzo del historial del usuario (su primer movimiento) y nunca en el
+    futuro. "Hoy" sale de America/Bogota (`reloj.hoy`)."""
     hoy = reloj.hoy()
     primero, ultimo = _mes(anio, mes)
     inicio = primero - timedelta(days=primero.weekday())  # lunes anterior o igual
     fin = ultimo + timedelta(days=6 - ultimo.weekday())  # domingo siguiente o igual
     totales = {t["fecha"]: t for t in repo_mov.totales_por_dia(con, id_usuario, inicio, fin)}
+    inicio_historial = repo_mov.primera_fecha(con, id_usuario)
+    confirmados = repo_otros.dias_sin_actividad(con, id_usuario, inicio, fin)
+    previstos: dict[date, list[dict]] = {}
+    for r in repo_otros.recurrente_previstos(con, id_usuario, inicio, fin):
+        previstos.setdefault(r["proxima_fecha"], []).append(r)
     # Desde cuándo se espera producido diario: la creación de la primera fuente diaria activa.
     diarias = [f["fecha_creacion"] for f in fuentes.listar(con, id_usuario)
                if f["activa"] and f["frecuencia"] == Frecuencia.DIARIA]
@@ -133,6 +145,11 @@ def calendario(con: Connection, id_usuario: int, anio: int, mes: int) -> dict:
         con_producido = t is not None and t["producido"] > 0
         sin_producido = (del_mes and not con_producido and inicio_diarias is not None
                          and d < hoy and d >= inicio_diarias)
+        registros = t["registros"] if t else 0
+        # C-04: un movimiento real tiene prioridad sobre la confirmación "sin actividad".
+        sin_actividad = registros == 0 and d in confirmados
+        sin_registros = (registros == 0 and not sin_actividad and d < hoy
+                         and inicio_historial is not None and d >= inicio_historial)
         if del_mes:
             total_ingresos += ingresos
             total_gastos += gastos
@@ -141,7 +158,16 @@ def calendario(con: Connection, id_usuario: int, anio: int, mes: int) -> dict:
         if d.weekday() == 0:
             semanas.append([])
         semanas[-1].append({
-            "fecha": d, "del_mes": del_mes, "hoy": d == hoy, "ingresos": ingresos, "gastos": gastos,
+            "fecha": d, "del_mes": del_mes, "hoy": d == hoy, "futuro": d > hoy,
+            "ingresos": ingresos, "gastos": gastos,
+            "aportes": t["aportes"] if t else Decimal(0),
+            "retiros": t["retiros"] if t else Decimal(0),
+            "rendimientos": t["rendimientos"] if t else Decimal(0),
+            "operaciones_ahorro": t["operaciones_ahorro"] if t else 0,
+            "registros": registros,
+            "sin_registros": sin_registros,
+            "sin_actividad": sin_actividad,
+            "compromisos": previstos.get(d, []),
             "con_producido": con_producido, "sin_producido": sin_producido,
         })
         d += timedelta(days=1)
@@ -156,4 +182,6 @@ def calendario(con: Connection, id_usuario: int, anio: int, mes: int) -> dict:
         "total_gastos": total_gastos,
         "dias_con_producido": con_producido_n,
         "dias_sin_producido": sin_producido_n,
+        "hoy": hoy,
+        "inicio_historial": inicio_historial,
     }

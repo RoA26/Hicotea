@@ -62,6 +62,21 @@ export function hoy(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date())
 }
 
+/**
+ * C-03: fecha precargada desde la URL (`?fecha=YYYY-MM-DD`) para registrar en
+ * un día pasado. Si falta, es inválida o es futura, se usa hoy (la API
+ * rechaza las fechas futuras de todos modos).
+ */
+export function fechaPrecargada(valor: string | null): string {
+  const h = hoy()
+  return valor && /^\d{4}-\d{2}-\d{2}$/.test(valor) && valor <= h ? valor : h
+}
+
+/** Ruta interna a la que volver tras registrar (`?volver=`); nunca un enlace externo. */
+export function rutaVolver(valor: string | null): string | null {
+  return valor && valor.startsWith('/') && !valor.startsWith('//') ? valor : null
+}
+
 /** "2026-11" del mes actual en Bogotá. */
 export const mesActual = () => hoy().slice(0, 7)
 

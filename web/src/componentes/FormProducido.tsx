@@ -2,13 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { movimientos, type ProducidoForm } from '../api/cliente'
 import { categoriasPara, type Catalogos } from '../lib/catalogos'
 import { useEnvio } from '../lib/datos'
-import { hoy } from '../lib/formato'
+import { fechaDia, hoy } from '../lib/formato'
 import { useRegistroRapido } from '../lib/registro'
 import { SelectorCategoria, SelectorFuente } from './Selectores'
-import { AlertaError, Boton, Campo, Entrada, EntradaMonto } from './ui'
+import { AlertaError, AvisoFecha, Boton, Campo, Entrada, EntradaMonto } from './ui'
 
 /** Registro rápido del producido del día (RN-01): ingreso de una fuente y, opcional, su costo. */
-export function FormProducido({ catalogos, alTerminar }: { catalogos: Catalogos; alTerminar?: () => void }) {
+export function FormProducido({ catalogos, alTerminar, fecha }: { catalogos: Catalogos; alTerminar?: () => void; fecha?: string }) {
   const registrado = useRegistroRapido()
   const { enviando, error, errores, enviar } = useEnvio()
   const ingresos = categoriasPara(catalogos.categorias, ['INGRESO'])
@@ -16,7 +16,7 @@ export function FormProducido({ catalogos, alTerminar }: { catalogos: Catalogos;
   const activas = catalogos.fuentes.filter((x) => x.activa)
   const [f, setF] = useState<ProducidoForm>({
     id_fuente: activas[0]?.id ?? 0,
-    fecha: hoy(),
+    fecha: fecha ?? hoy(),
     monto: '',
     id_categoria_ingreso: (ingresos.find((c) => c.nombre === 'Producido') ?? ingresos[0])?.id ?? null,
     costo: '',
@@ -51,6 +51,7 @@ export function FormProducido({ catalogos, alTerminar }: { catalogos: Catalogos;
           <Entrada type="date" value={f.fecha} max={hoy()} onChange={(e) => pon({ fecha: e.target.value })} aria-invalid={!!errores.fecha || undefined} required />
         </Campo>
       </div>
+      <AvisoFecha fecha={f.fecha} hoy={hoy()} texto={fechaDia} />
       <Campo etiqueta="Categoría del ingreso" error={errores.id_categoria_ingreso}>
         <SelectorCategoria categorias={ingresos} valor={f.id_categoria_ingreso} onCambio={(id) => pon({ id_categoria_ingreso: id })} />
       </Campo>

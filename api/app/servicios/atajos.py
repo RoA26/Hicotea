@@ -3,6 +3,8 @@ gasto que se registran con un toque, con la fecha de hoy. Se validan con las
 mismas reglas del formulario general al crearlos y otra vez al usarlos (la
 categoría o la fuente pudieron desactivarse después)."""
 
+from datetime import date
+
 from sqlalchemy import Connection
 
 from app.errores import NoEncontrado, ReglaNegocio
@@ -51,14 +53,16 @@ def eliminar(con: Connection, id_usuario: int, id_atajo: int) -> None:
     repo.atajo_eliminar(con, id_usuario, id_atajo)
 
 
-def usar(con: Connection, id_usuario: int, id_atajo: int) -> tuple[dict, int]:
-    """Registra el movimiento del botón con la fecha de hoy; devuelve (atajo, id del movimiento)."""
+def usar(con: Connection, id_usuario: int, id_atajo: int, fecha: date | None = None) -> tuple[dict, int]:
+    """Registra el movimiento del botón; devuelve (atajo, id del movimiento).
+    `fecha` es la fecha efectiva (C-03, registro retrospectivo); sin ella, hoy.
+    Las reglas de fecha (no futura), RN-01 y saldos las aplica `movimientos.registrar`."""
     a = obtener(con, id_usuario, id_atajo)
     id_movimiento = movimientos.registrar(
         con,
         id_usuario,
         MovimientoForm(
-            tipo=TipoMovimiento(a["tipo"]), fecha=reloj.hoy(), monto=dinero.a_texto(a["monto"]),
+            tipo=TipoMovimiento(a["tipo"]), fecha=fecha or reloj.hoy(), monto=dinero.a_texto(a["monto"]),
             id_categoria=a["id_categoria"], id_fuente=a["id_fuente"], descripcion=a["nombre"],
         ),
     )

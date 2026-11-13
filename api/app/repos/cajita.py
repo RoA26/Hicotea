@@ -10,7 +10,7 @@ EXPRESION_SALDO = """COALESCE(SUM(CASE WHEN m.tipo IN ('APORTE', 'RENDIMIENTO', 
                                   ELSE 0 END), 0)"""
 
 _SELECT_CON_SALDO = f"""
-    SELECT c.id, c.nombre, c.proposito, c.porcentaje, c.es_resto, c.activa, {EXPRESION_SALDO} AS saldo
+    SELECT c.id, c.nombre, c.descripcion, c.proposito, c.porcentaje, c.es_resto, c.activa, {EXPRESION_SALDO} AS saldo
     FROM cajita c
     LEFT JOIN movimiento m ON m.id_cajita = c.id
 """
@@ -29,12 +29,16 @@ def buscar(con: Connection, id_usuario: int, id_cajita: int) -> dict | None:
     return uno(con, _SELECT_CON_SALDO + "WHERE c.id = :id AND c.id_usuario = :u GROUP BY c.id", id=id_cajita, u=id_usuario)
 
 
-def insertar(con: Connection, id_usuario: int, nombre: str, proposito: str, porcentaje: Decimal, es_resto: bool) -> int:
+def insertar(
+    con: Connection, id_usuario: int, nombre: str, proposito: str, porcentaje: Decimal, es_resto: bool,
+    descripcion: str | None = None,
+) -> int:
     return valor(
         con,
-        """INSERT INTO cajita (id_usuario, nombre, proposito, porcentaje, es_resto)
-           VALUES (:u, :n, :p, :pct, :r) RETURNING id""",
+        """INSERT INTO cajita (id_usuario, nombre, proposito, porcentaje, es_resto, descripcion)
+           VALUES (:u, :n, :p, :pct, :r, :d) RETURNING id""",
         u=id_usuario,
+        d=descripcion,
         n=nombre,
         p=proposito,
         pct=porcentaje,
@@ -43,12 +47,14 @@ def insertar(con: Connection, id_usuario: int, nombre: str, proposito: str, porc
 
 
 def actualizar(
-    con: Connection, id_usuario: int, id_cajita: int, nombre: str, proposito: str, porcentaje: Decimal, es_resto: bool
+    con: Connection, id_usuario: int, id_cajita: int, nombre: str, proposito: str, porcentaje: Decimal, es_resto: bool,
+    descripcion: str | None = None,
 ) -> None:
     ejecutar(
         con,
-        """UPDATE cajita SET nombre = :n, proposito = :p, porcentaje = :pct, es_resto = :r
+        """UPDATE cajita SET nombre = :n, proposito = :p, porcentaje = :pct, es_resto = :r, descripcion = :d
            WHERE id = :id AND id_usuario = :u""",
+        d=descripcion,
         n=nombre,
         p=proposito,
         pct=porcentaje,

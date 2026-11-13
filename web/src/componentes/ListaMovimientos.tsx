@@ -19,7 +19,7 @@ function detalle(m: Movimiento): string {
 /** Lista de movimientos; `acciones` pinta los botones de cada fila. */
 export function ListaMovimientos({ movimientos, acciones }: { movimientos: Movimiento[]; acciones?: (m: Movimiento) => ReactNode }) {
   return (
-    <ul className="divide-y divide-borde overflow-hidden rounded-2xl border border-borde bg-superficie">
+    <ul className="divide-y divide-borde overflow-hidden rounded-tarjeta border border-borde bg-superficie">
       {movimientos.map((m, i) => (
         <li
           key={m.id}

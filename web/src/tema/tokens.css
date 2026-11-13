@@ -13,6 +13,43 @@
   --ingreso: #34d399;
   --gasto: #fb7185;
   --aviso: #fbbf24;
+
+  /* Series (cajitas, categorías). Cada serie va con patrón propio: nunca solo color. */
+  --serie-1: #34d399;
+  --serie-2: #7dd3fc;
+  --serie-3: #c4b5fd;
+  --serie-4: #a3e635;
+  --serie-5: #fdba74;
+  --serie-6: #f0abfc;
+  --texto-sobre-serie: #07100c;
+  --velo: rgb(0 0 0 / 0.6);
+
+  /* ---- Forma, tipografía y movimiento (eje "estilo"). Los valores por defecto son Original. ---- */
+  --radio-tarjeta: 1rem; /* rounded-2xl */
+  --radio-control: 0.75rem; /* rounded-xl */
+  --radio-modal: 1.5rem; /* rounded-3xl */
+  --radio-insignia: 9999px;
+  --borde-ancho: 1px;
+  --sombra-tarjeta: 0 0 #0000; /* sombra nula válida dentro de la lista de box-shadow */
+  --sombra-elevada: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25);
+  --fuente-texto: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fuente-titulo: var(--fuente-texto);
+  --peso-titulo: 700;
+  --tracking-titulo: -0.025em;
+  --fuente-cifra: var(--fuente-texto);
+  --peso-cifra: 600;
+  --estilo-cifra: normal;
+  --duracion-corta: 160ms;
+  --duracion-media: 240ms;
+  --duracion-larga: 400ms;
+  --curva-salida: cubic-bezier(0.16, 1, 0.3, 1);
+  --curva-estandar: cubic-bezier(0.2, 0, 0, 1);
+  --desplazamiento-entrada: 8px;
+
+  /* Estados del calendario vivo. */
+  --dia-sin-registros: color-mix(in oklab, var(--superficie-2) 60%, transparent);
+  --dia-compromiso: var(--aviso);
+  --dia-ahorro: var(--acento);
 }
 
 [data-theme='light'] {
@@ -27,7 +64,23 @@
   --acento-vivo: #3f6212;
   --ingreso: #047857;
   --gasto: #e11d48;
-  --aviso: #d97706;
+  --aviso: #d97706; /* 3,19:1 sobre blanco: no alcanza AA en texto pequeño (riesgo heredado del kit) */
+
+  --serie-1: #047857;
+  --serie-2: #0369a1;
+  --serie-3: #6d28d9;
+  --serie-4: #3f6212;
+  --serie-5: #c2410c;
+  --serie-6: #a21caf;
+  --texto-sobre-serie: #ffffff;
+  --sombra-elevada: 0 10px 15px -3px rgb(7 25 18 / 0.12), 0 4px 6px -4px rgb(7 25 18 / 0.1);
+}
+
+/* Intensidad de movimiento elegida por el usuario (prefers-reduced-motion siempre gana: ver tema/preferencias.ts). */
+[data-movimiento='sutil'] {
+  --desplazamiento-entrada: 4px;
+  --duracion-media: 180ms;
+  --duracion-larga: 260ms;
 }
 
 /* `dark:` sigue el tema de la app (data-theme), no el del sistema operativo.
@@ -47,6 +100,23 @@
   --color-ingreso: var(--ingreso);
   --color-gasto: var(--gasto);
   --color-aviso: var(--aviso);
+  --color-serie-1: var(--serie-1);
+  --color-serie-2: var(--serie-2);
+  --color-serie-3: var(--serie-3);
+  --color-serie-4: var(--serie-4);
+  --color-serie-5: var(--serie-5);
+  --color-serie-6: var(--serie-6);
+  --color-sobre-serie: var(--texto-sobre-serie);
+
+  --radius-tarjeta: var(--radio-tarjeta);
+  --radius-control: var(--radio-control);
+  --radius-modal: var(--radio-modal);
+  --radius-insignia: var(--radio-insignia);
+  --shadow-tarjeta: var(--sombra-tarjeta);
+  --shadow-elevada: var(--sombra-elevada);
+  --font-texto: var(--fuente-texto);
+  --font-titulo: var(--fuente-titulo);
+  --font-cifra: var(--fuente-cifra);
 
   --font-marca: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }

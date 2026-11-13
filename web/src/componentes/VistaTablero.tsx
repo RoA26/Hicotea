@@ -30,7 +30,7 @@ function AvisosIntegridad({ t, enlaces }: { t: Tablero; enlaces: boolean }) {
   return (
     <div className="space-y-2" role="status">
       {disponible < 0 && (
-        <div className="rounded-2xl border border-aviso/30 bg-aviso/10 p-4 text-sm">
+        <div className="rounded-tarjeta border border-aviso/30 bg-aviso/10 p-4 text-sm">
           <p className="font-semibold text-aviso">Tu disponible está en negativo</p>
           <p className="mt-1 text-texto-suave">
             Tienes <span className="cifra font-medium text-texto">{dinero(t.total_cajitas)}</span> en cajitas, pero
@@ -40,14 +40,14 @@ function AvisosIntegridad({ t, enlaces }: { t: Tablero; enlaces: boolean }) {
             que falte.
           </p>
           {enlaces && (
-            <Link to="/cajitas" className="mt-2 inline-block text-acento hover:underline">
-              Ir a cajitas
+            <Link to="/caparazon" className="mt-2 inline-block text-acento hover:underline">
+              Ir al Caparazón
             </Link>
           )}
         </div>
       )}
       {inactivas.length > 0 && (
-        <div className="rounded-2xl border border-aviso/30 bg-aviso/10 p-4 text-sm">
+        <div className="rounded-tarjeta border border-aviso/30 bg-aviso/10 p-4 text-sm">
           <p className="font-semibold text-aviso">Hay dinero en cajitas desactivadas</p>
           <p className="mt-1 text-texto-suave">
             Se cuenta en tu saldo total. Actívalas para retirarlo o seguir usándolo:
@@ -203,8 +203,8 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
 
       <div className="grid gap-x-6 lg:grid-cols-2">
         {t.cajitas.length > 0 && (
-          <Seccion titulo="Cajitas" acciones={ver('/cajitas')}>
-            <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+          <Seccion titulo="Cajitas" acciones={ver('/caparazon', 'Ver Caparazón')}>
+            <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
               {t.cajitas.map((c) => (
                 <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-3">
                   <div className="min-w-0">
@@ -220,7 +220,7 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
           </Seccion>
         )}
         {t.metas.length > 0 && (
-          <Seccion titulo="Metas" acciones={ver('/metas')}>
+          <Seccion titulo="Metas" acciones={ver('/caparazon', 'Ver Caparazón')}>
             <div className="space-y-2">
               {t.metas.map((x) => (
                 <Tarjeta key={x.id} className="py-3">

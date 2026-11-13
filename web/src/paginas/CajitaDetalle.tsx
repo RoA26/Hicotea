@@ -1,8 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { ContadorAnimado } from '../animacion/ContadorAnimado'
-import { cajitas as api, movimientos } from '../api/cliente'
-import type { OperacionCajita } from '../api/tipos'
+import { cajitas as api, metas as apiMetas, movimientos } from '../api/cliente'
+import type { Meta, OperacionCajita } from '../api/tipos'
+import { Celebracion } from '../componentes/caparazon/Celebracion'
+import { FormCajita } from '../componentes/caparazon/FormCajita'
+import { FormMeta } from '../componentes/caparazon/FormMeta'
+import { MetricasCajita, ProgresoMeta } from '../componentes/caparazon/Metricas'
 import { useAvisar, useConfirmar, useSaldo } from '../componentes/Globales'
 import { Icono } from '../componentes/Iconos'
 import { conConfirmacionNegativo } from '../lib/correcciones'
@@ -10,6 +14,7 @@ import { ListaMovimientos, tituloMovimiento } from '../componentes/ListaMovimien
 import { Modal } from '../componentes/Modal'
 import {
   AlertaError,
+  AvisoFecha,
   Boton,
   Campo,
   Cargando,
@@ -26,13 +31,16 @@ import {
 import { useDatos, useEnvio } from '../lib/datos'
 import {
   dinero,
+  fechaDia,
+  fechaLarga,
+  fechaPrecargada,
   formatoPorcentaje,
   hoy,
+  rutaVolver,
   NOMBRE_PROPOSITO,
   numero,
 } from '../lib/formato'
 import { useRegistroRapido } from '../lib/registro'
-import { FormCajita } from './Cajitas'
 
 const AYUDA_OPERACION: Record<OperacionCajita, string> = {
   APORTE: 'Pasa plata de lo disponible a esta cajita.',
@@ -49,9 +57,18 @@ export default function CajitaDetalle() {
   const { version, setSaldo, avisarCambio } = useSaldo()
   const cajita = useDatos(() => api.obtener(id), [id, version])
   const movs = useDatos(() => api.movimientos(id), [id, version])
+  const todas = useDatos(api.listar, [version]) // para la proporción del ahorro total
+  const metas = useDatos(apiMetas.listar, [version])
   const { enviando, error, errores, enviar } = useEnvio()
-  const [op, setOp] = useState({ operacion: 'APORTE' as OperacionCajita, fecha: hoy(), monto: '', descripcion: '' })
+  const navegar = useNavigate()
+  const [q] = useSearchParams()
+  const volver = rutaVolver(q.get('volver'))
+  // ?operacion= (desde el Caparazón) y ?fecha= (C-03b, ahorro retrospectivo desde el calendario).
+  const opInicial: OperacionCajita = q.get('operacion') === 'RETIRO' ? 'RETIRO' : q.get('operacion') === 'RENDIMIENTO' ? 'RENDIMIENTO' : 'APORTE'
+  const [op, setOp] = useState({ operacion: opInicial as OperacionCajita, fecha: fechaPrecargada(q.get('fecha')), monto: '', descripcion: '' })
   const [editar, setEditar] = useState(false)
+  const [editarMeta, setEditarMeta] = useState<Meta | 'nueva' | null>(null)
+  const [celebrada, setCelebrada] = useState<Meta | null>(null)
 
   if (cajita.error) return <ErrorCarga error={cajita.error} reintentar={cajita.recargar} />
   if (!cajita.datos) return <Cargando />
@@ -75,16 +92,44 @@ export default function CajitaDetalle() {
     if (r) {
       registrado(r)
       setOp((x) => ({ ...x, monto: '', descripcion: '' }))
-      void cajita.recargar()
-      void movs.recargar()
+      if (volver) navegar(volver)
     }
+  }
+
+  const metasCajita = (metas.datos ?? []).filter((m) => m.id_cajita === id)
+  const metaActiva = metasCajita.find((m) => m.activa) ?? null
+  const historicas = metasCajita.filter((m) => !m.activa)
+  const totalActivas = (todas.datos ?? []).filter((x) => x.activa).reduce((s, x) => s + numero(x.saldo), 0)
+  const proporcion = c.activa && totalActivas > 0 ? (numero(c.saldo) / totalActivas) * 100 : null
+
+  async function accionMeta(fn: () => Promise<Meta>, ok: string, celebrar = false) {
+    try {
+      const m = await fn()
+      if (celebrar) setCelebrada(m)
+      else avisar(ok)
+      void metas.recargar()
+    } catch (e) {
+      avisar((e as Error).message, { tono: 'error' })
+    }
+  }
+
+  async function celebrar(m: Meta) {
+    const ok = await confirmar({
+      titulo: `Celebrar «${m.nombre}»`,
+      mensaje:
+        'Se guarda el logro en tu archivo y la meta se cierra para que la cajita pueda tener otra. El dinero se queda en la cajita: no se mueve ni se registra nada.',
+      aceptar: 'Celebrar y guardar',
+    })
+    if (ok) void accionMeta(() => apiMetas.logro(m.id), '', true)
   }
 
   async function alternar() {
     const ok = await confirmar({
-      titulo: c.activa ? 'Desactivar cajita' : 'Activar cajita',
-      mensaje: c.activa ? 'No recibirá repartos ni operaciones mientras esté desactivada.' : undefined,
-      aceptar: c.activa ? 'Desactivar' : 'Activar',
+      titulo: c.activa ? 'Archivar cajita' : 'Reactivar cajita',
+      mensaje: c.activa
+        ? 'No recibirá repartos ni operaciones mientras esté archivada. Sus movimientos y metas se conservan.'
+        : undefined,
+      aceptar: c.activa ? 'Archivar' : 'Reactivar',
       peligro: c.activa,
     })
     if (!ok) return
@@ -123,11 +168,17 @@ export default function CajitaDetalle() {
       <Encabezado
         titulo={c.nombre}
         subtitulo={
-          <span className="flex flex-wrap items-center gap-2">
-            <span>{NOMBRE_PROPOSITO[c.proposito]}</span>
-            <span>·</span>
-            <span>{c.es_resto ? 'Recibe el resto del reparto' : `${formatoPorcentaje(c.porcentaje)} del reparto`}</span>
-            {!c.activa && <Insignia>Inactiva</Insignia>}
+          <span className="flex flex-col gap-1">
+            <Link to="/caparazon" className="text-sm text-acento hover:underline">
+              ← Caparazón
+            </Link>
+            {c.descripcion && <span>{c.descripcion}</span>}
+            <span className="flex flex-wrap items-center gap-2">
+              <span>{NOMBRE_PROPOSITO[c.proposito]}</span>
+              <span>·</span>
+              <span>{c.es_resto ? 'Recibe el resto del reparto' : `${formatoPorcentaje(c.porcentaje)} del reparto`}</span>
+              {!c.activa && <Insignia>Archivada</Insignia>}
+            </span>
           </span>
         }
         acciones={
@@ -136,7 +187,7 @@ export default function CajitaDetalle() {
               <Icono nombre="lapiz" className="size-4" /> Editar
             </Boton>
             <Boton variante={c.activa ? 'peligro' : 'secundario'} onClick={alternar}>
-              {c.activa ? 'Desactivar' : 'Activar'}
+              {c.activa ? 'Archivar' : 'Reactivar'}
             </Boton>
           </>
         }
@@ -174,6 +225,65 @@ export default function CajitaDetalle() {
                 </p>
               </div>
             </div>
+          </Tarjeta>
+
+          {celebrada && <Celebracion meta={celebrada} alCerrar={() => setCelebrada(null)} />}
+
+          {/* Las tres métricas, separadas (reparto, proporción, meta) */}
+          <Tarjeta className="space-y-4 p-5">
+            <MetricasCajita cajita={c} proporcion={proporcion} meta={metaActiva} />
+            <div className="flex flex-wrap gap-2 border-t border-borde pt-3">
+              {metaActiva ? (
+                <>
+                  {metaActiva.cumplida && (
+                    <Boton chico onClick={() => void celebrar(metaActiva)}>
+                      Celebrar y guardar logro
+                    </Boton>
+                  )}
+                  <Boton chico variante="fantasma" onClick={() => setEditarMeta(metaActiva)}>
+                    Editar meta
+                  </Boton>
+                  <Boton chico variante="fantasma" onClick={() => void accionMeta(() => apiMetas.estado(metaActiva.id, false), 'Meta pausada.')}>
+                    Pausar meta
+                  </Boton>
+                </>
+              ) : (
+                c.activa && (
+                  <Boton chico variante="secundario" onClick={() => setEditarMeta('nueva')}>
+                    <Icono nombre="mas" /> Añadir meta
+                  </Boton>
+                )
+              )}
+            </div>
+            {historicas.length > 0 && (
+              <details className="text-sm">
+                <summary className="cursor-pointer text-texto-suave">Metas anteriores de esta cajita ({historicas.length})</summary>
+                <ul className="mt-2 space-y-3">
+                  {historicas.map((m) => (
+                    <li key={m.id} className="rounded-control border border-borde p-3">
+                      {m.cumplida_en ? (
+                        <p>
+                          <span className="font-medium">✓ {m.nombre}</span>
+                          <span className="cifra block text-xs text-texto-suave">
+                            {dinero(m.monto_logrado ?? m.monto_objetivo)} · reconocida el {fechaLarga(m.cumplida_en)}
+                            {m.alcanzada_en && ` · alcanzada el ${fechaLarga(m.alcanzada_en)}`}
+                          </span>
+                        </p>
+                      ) : (
+                        <>
+                          <ProgresoMeta meta={m} />
+                          {!metaActiva && c.activa && (
+                            <Boton chico variante="fantasma" className="mt-1" onClick={() => void accionMeta(() => apiMetas.estado(m.id, true), 'Meta reactivada.')}>
+                              Reactivar
+                            </Boton>
+                          )}
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </Tarjeta>
 
           {/* Formulario de operaciones contextual */}
@@ -215,6 +325,7 @@ export default function CajitaDetalle() {
                     />
                   </Campo>
                 </div>
+                <AvisoFecha fecha={op.fecha} hoy={hoy()} texto={fechaDia} />
 
                 <Campo etiqueta="Nota descriptiva (opcional)">
                   <Entrada
@@ -233,7 +344,7 @@ export default function CajitaDetalle() {
               </form>
             </Tarjeta>
           ) : (
-            <div className="rounded-2xl border border-borde bg-superficie-2 p-4 text-center text-sm text-texto-suave">
+            <div className="rounded-tarjeta border border-borde bg-superficie-2 p-4 text-center text-sm text-texto-suave">
               Esta cajita está desactivada. Actívala para registrar aportes, retiros o rendimientos.
             </div>
           )}
@@ -266,6 +377,21 @@ export default function CajitaDetalle() {
           )}
         </Seccion>
       </div>
+
+      <Modal abierto={editarMeta !== null} onCerrar={() => setEditarMeta(null)} titulo={editarMeta === 'nueva' ? 'Nueva meta' : 'Editar meta'}>
+        {editarMeta !== null && (
+          <FormMeta
+            meta={editarMeta === 'nueva' ? null : editarMeta}
+            idCajita={id}
+            nombreCajita={c.nombre}
+            alGuardar={() => {
+              setEditarMeta(null)
+              avisar('Meta guardada.')
+              void metas.recargar()
+            }}
+          />
+        )}
+      </Modal>
 
       <Modal abierto={editar} onCerrar={() => setEditar(false)} titulo="Editar cajita">
         {editar && (

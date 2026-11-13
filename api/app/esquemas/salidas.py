@@ -13,6 +13,7 @@ from app.modelo.enums import (
     Periodicidad,
     PropositoCajita,
     TipoCategoria,
+    TipoIngresoGasto,
     TipoMovimiento,
 )
 
@@ -123,6 +124,7 @@ class RespuestaConSaldo(BaseModel):
 class CajitaOut(BaseModel):
     id: int
     nombre: str
+    descripcion: str | None = None
     proposito: PropositoCajita
     porcentaje: Dinero
     es_resto: bool
@@ -166,6 +168,10 @@ class MetaOut(BaseModel):
     aporte_mensual: Dinero | None
     cumplida: bool
     vencida: bool
+    cajita_activa: bool = True
+    cumplida_en: date | None = None  # fecha de RECONOCIMIENTO del logro (al celebrarlo o archivarlo cumplida)
+    alcanzada_en: date | None = None  # primera fecha en que el saldo llegó al objetivo (según el historial)
+    monto_logrado: Dinero | None = None
 
 
 class PresupuestoOut(BaseModel):
@@ -270,14 +276,34 @@ class Tablero(BaseModel):
     pendientes: list[RecurrenteOut]
     alertas_presupuesto: list[PresupuestoOut]
     metas: list[MetaOut]
+    ayer_sin_registros: bool = False  # C-05: recordatorio discreto en Inicio
+
+
+class CompromisoPrevisto(BaseModel):
+    """Recurrente activo cuya próxima fecha cae ese día (aún no registrado)."""
+
+    id: int
+    nombre: str
+    tipo: TipoIngresoGasto
+    monto: Dinero
 
 
 class DiaCalendario(BaseModel):
     fecha: date
     del_mes: bool
     hoy: bool
+    futuro: bool = False
     ingresos: Dinero
     gastos: Dinero
+    # Operaciones de ahorro: flujos internos entre el disponible y las cajitas, no ingresos ni gastos.
+    aportes: Dinero = Decimal(0)
+    retiros: Dinero = Decimal(0)
+    rendimientos: Dinero = Decimal(0)  # incluye "saldo que ya tenía"
+    operaciones_ahorro: int = 0
+    registros: int = 0
+    sin_registros: bool = False  # pasado, desde el comienzo del historial, sin ningún registro
+    sin_actividad: bool = False  # confirmado por el usuario como día sin actividad (C-04)
+    compromisos: list[CompromisoPrevisto] = []
     con_producido: bool
     sin_producido: bool
 
@@ -291,3 +317,10 @@ class MesCalendario(BaseModel):
     total_gastos: Dinero
     dias_con_producido: int
     dias_sin_producido: int
+    hoy: date | None = None
+    inicio_historial: date | None = None
+
+
+class DiaSinActividadOut(BaseModel):
+    fecha: date
+    confirmado: bool

@@ -53,7 +53,7 @@ export default function Compartido() {
       ) : vista === 'tablero' && t.datos ? (
         <VistaTablero t={t.datos} enlaces={false} />
       ) : vista === 'calendario' && c.datos ? (
-        <VistaCalendario c={c.datos} alCambiarMes={setMes} />
+        <VistaCalendario c={c.datos} seleccionado={null} alSeleccionar={() => {}} alCambiarMes={(mes) => setMes(mes)} />
       ) : m.datos ? (
         <>
           <Tarjeta className="mb-4 grid grid-cols-3 gap-3">

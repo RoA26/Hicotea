@@ -40,14 +40,14 @@ export function Modal({
   if (!abierto) return null
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="anim-fondo absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={onCerrar} aria-hidden />
+      <div className="anim-fondo absolute inset-0 bg-[var(--velo)] backdrop-blur-xs" onClick={onCerrar} aria-hidden />
       <div
         ref={caja}
         role="dialog"
         aria-modal="true"
         aria-labelledby={id}
         tabIndex={-1}
-        className="anim-modal relative max-h-[90dvh] w-full overflow-y-auto rounded-t-3xl border border-borde bg-superficie p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl outline-none sm:max-w-md sm:rounded-3xl"
+        className="anim-modal relative max-h-[90dvh] w-full overflow-y-auto rounded-t-modal border border-borde bg-superficie p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl outline-none sm:max-w-md sm:rounded-modal"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id={id} className="text-lg font-semibold">

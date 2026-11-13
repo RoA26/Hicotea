@@ -8,7 +8,7 @@ export function MarcoAuth({ titulo, subtitulo, children, pie }: { titulo: string
       <Link to="/" className="mb-8" aria-label="Hicotea, ir al inicio">
         <Wordmark tamano="lg" />
       </Link>
-      <div className="w-full max-w-sm rounded-3xl border border-borde bg-superficie p-6">
+      <div className="w-full max-w-sm rounded-modal border border-borde bg-superficie p-6">
         <h1 className="text-xl font-bold">{titulo}</h1>
         {subtitulo && <p className="mt-1 text-sm text-texto-suave">{subtitulo}</p>}
         <div className="mt-5">{children}</div>

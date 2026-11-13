@@ -11,9 +11,18 @@
     <meta name="description" content="Tus ingresos, gastos y cajitas de ahorro, en orden." />
     <title>Hicotea</title>
     <script>
-      // Aplica el tema guardado antes de pintar para evitar el destello oscuro→claro.
+      // Aplica estilo, apariencia, paleta y movimiento guardados ANTES de pintar (sin destellos).
+      // Debe resolver igual que normalizar() en src/tema/preferencias.ts.
       try {
-        if (localStorage.getItem('hicotea:tema') === 'claro') document.documentElement.dataset.theme = 'light'
+        var d = document.documentElement.dataset, g = function (k) { return localStorage.getItem('hicotea:' + k) }
+        var paletas = { original: ['hicotea'], natura: ['bosque', 'arena', 'terracota', 'salvia'] }
+        var estilo = paletas[g('estilo')] ? g('estilo') : 'original'
+        var tema = g('tema'), mq = function (q) { return window.matchMedia && window.matchMedia(q).matches }
+        if (tema === 'claro' || (tema === 'sistema' && !mq('(prefers-color-scheme: dark)'))) d.theme = 'light'
+        if (estilo !== 'original') d.estilo = estilo
+        d.paleta = paletas[estilo].indexOf(g('paleta')) >= 0 ? g('paleta') : paletas[estilo][0]
+        var mov = g('movimiento')
+        d.movimiento = mq('(prefers-reduced-motion: reduce)') ? 'reducido' : mov === 'sutil' || mov === 'reducido' ? mov : 'completo'
       } catch (e) {}
     </script>
   </head>

@@ -101,6 +101,19 @@ def recurrente_pendientes(con: Connection, id_usuario: int, hoy: date) -> list[d
     )
 
 
+def recurrente_previstos(con: Connection, id_usuario: int, desde: date, hasta: date) -> list[dict]:
+    """Recurrentes activos cuya próxima fecha cae en el intervalo (compromisos previstos)."""
+    return todos(
+        con,
+        """SELECT id, nombre, tipo, monto, proxima_fecha FROM recurrente
+           WHERE id_usuario = :u AND activo AND proxima_fecha BETWEEN :desde AND :hasta
+           ORDER BY proxima_fecha, nombre""",
+        u=id_usuario,
+        desde=desde,
+        hasta=hasta,
+    )
+
+
 def recurrente_existe_nombre(con: Connection, id_usuario: int, nombre: str, excluido: int | None) -> bool:
     return _existe_nombre(con, "recurrente", id_usuario, nombre, excluido)
 
@@ -146,7 +159,8 @@ def presupuesto_listar_con_gastado(con: Connection, id_usuario: int, desde: date
 
 _SELECT_META = f"""
     SELECT mt.id, mt.nombre, mt.monto_objetivo, mt.fecha_objetivo, mt.id_cajita, mt.activa,
-           c.nombre AS nombre_cajita, {EXPRESION_SALDO} AS saldo_cajita
+           mt.cumplida_en, mt.monto_logrado, mt.alcanzada_en,
+           c.nombre AS nombre_cajita, c.activa AS cajita_activa, {EXPRESION_SALDO} AS saldo_cajita
     FROM meta mt
     JOIN cajita c ON c.id = mt.id_cajita
     LEFT JOIN movimiento m ON m.id_cajita = c.id
@@ -179,19 +193,47 @@ def meta_cambiar_estado(con: Connection, id_usuario: int, id_meta: int, activa: 
     ejecutar(con, "UPDATE meta SET activa = :a WHERE id = :id AND id_usuario = :u", a=activa, id=id_meta, u=id_usuario)
 
 
+def meta_guardar_logro(
+    con: Connection, id_usuario: int, id_meta: int, fecha, monto: Decimal, alcanzada_en=None
+) -> None:
+    """Fija el logro de una meta cumplida (no se vuelve a escribir si ya existe).
+    `fecha` = reconocimiento; `alcanzada_en` = cuándo el saldo llegó al objetivo."""
+    ejecutar(
+        con,
+        """UPDATE meta SET cumplida_en = :f, monto_logrado = :m, alcanzada_en = :a
+           WHERE id = :id AND id_usuario = :u AND cumplida_en IS NULL""",
+        f=fecha,
+        m=monto,
+        a=alcanzada_en,
+        id=id_meta,
+        u=id_usuario,
+    )
+
+
+def meta_activa_en_cajita(con: Connection, id_usuario: int, id_cajita: int, excluido: int | None) -> dict | None:
+    return uno(
+        con,
+        f"""SELECT id, nombre FROM meta
+            WHERE id_usuario = :u AND id_cajita = :c AND activa AND id <> {EXCLUIDO}""",
+        u=id_usuario,
+        c=id_cajita,
+        excluido=excluido,
+    )
+
+
 def meta_eliminar(con: Connection, id_usuario: int, id_meta: int) -> None:
     ejecutar(con, "DELETE FROM meta WHERE id = :id AND id_usuario = :u", id=id_meta, u=id_usuario)
 
 
 def meta_buscar(con: Connection, id_usuario: int, id_meta: int) -> dict | None:
-    return uno(con, _SELECT_META + "WHERE mt.id = :id AND mt.id_usuario = :u GROUP BY mt.id, c.nombre", id=id_meta, u=id_usuario)
+    return uno(con, _SELECT_META + "WHERE mt.id = :id AND mt.id_usuario = :u GROUP BY mt.id, c.id", id=id_meta, u=id_usuario)
 
 
 def meta_listar(con: Connection, id_usuario: int) -> list[dict]:
     return todos(
         con,
         _SELECT_META
-        + "WHERE mt.id_usuario = :u GROUP BY mt.id, c.nombre ORDER BY mt.activa DESC, mt.fecha_objetivo NULLS LAST, mt.nombre",
+        + "WHERE mt.id_usuario = :u GROUP BY mt.id, c.id ORDER BY mt.activa DESC, mt.fecha_objetivo NULLS LAST, mt.nombre",
         u=id_usuario,
     )
 
@@ -325,3 +367,31 @@ def recuperacion_intento_fallido(con: Connection, id_solicitud: int) -> int:
 
 def recuperacion_marcar_usada(con: Connection, id_solicitud: int) -> None:
     ejecutar(con, "UPDATE recuperacion_contrasena SET usada = TRUE WHERE id = :id", id=id_solicitud)
+
+
+# ====================================================================== días sin actividad (C-04)
+
+
+def dia_sin_actividad_marcar(con: Connection, id_usuario: int, fecha: date) -> None:
+    ejecutar(
+        con,
+        """INSERT INTO dia_sin_actividad (id_usuario, fecha) VALUES (:u, :f)
+           ON CONFLICT (id_usuario, fecha) DO NOTHING""",
+        u=id_usuario,
+        f=fecha,
+    )
+
+
+def dia_sin_actividad_quitar(con: Connection, id_usuario: int, fecha: date) -> None:
+    ejecutar(con, "DELETE FROM dia_sin_actividad WHERE id_usuario = :u AND fecha = :f", u=id_usuario, f=fecha)
+
+
+def dias_sin_actividad(con: Connection, id_usuario: int, desde: date, hasta: date) -> set[date]:
+    filas = todos(
+        con,
+        "SELECT fecha FROM dia_sin_actividad WHERE id_usuario = :u AND fecha BETWEEN :desde AND :hasta",
+        u=id_usuario,
+        desde=desde,
+        hasta=hasta,
+    )
+    return {f["fecha"] for f in filas}

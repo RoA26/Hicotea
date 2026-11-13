@@ -56,7 +56,7 @@ def crear(con: Connection, id_usuario: int, form: CajitaForm) -> dict:
     saldo_inicial = None if dinero.es_vacio_o_cero(form.saldo_inicial) else dinero.parsear(form.saldo_inicial, "saldo_inicial")
     if form.es_resto:
         repo.desmarcar_resto(con, id_usuario, None)
-    id_cajita = repo.insertar(con, id_usuario, nombre, str(form.proposito), porcentaje, form.es_resto)
+    id_cajita = repo.insertar(con, id_usuario, nombre, str(form.proposito), porcentaje, form.es_resto, _descripcion(form))
     if saldo_inicial is not None:
         _insertar_operacion(
             con, id_usuario, id_cajita, TipoMovimiento.SALDO_INICIAL, saldo_inicial, reloj.hoy(), "Saldo que ya tenía la cajita"
@@ -74,7 +74,7 @@ def actualizar(con: Connection, id_usuario: int, id_cajita: int, form: CajitaFor
         _validar_suma_porcentajes(con, id_usuario, id_cajita, porcentaje)
     if form.es_resto:
         repo.desmarcar_resto(con, id_usuario, id_cajita)
-    repo.actualizar(con, id_usuario, id_cajita, nombre, str(form.proposito), porcentaje, form.es_resto)
+    repo.actualizar(con, id_usuario, id_cajita, nombre, str(form.proposito), porcentaje, form.es_resto, _descripcion(form))
     return obtener(con, id_usuario, id_cajita)
 
 
@@ -178,6 +178,16 @@ def confirmar_reparto(con: Connection, id_usuario: int, form: RepartoForm) -> De
 
 
 # ------------------------------------------------------------------ utilidades
+
+
+def _descripcion(form: CajitaForm) -> str | None:
+    d = (form.descripcion or "").strip()
+    return d or None
+
+
+def movimientos_de_ahorro(con: Connection, id_usuario: int, cantidad: int = 100) -> list[dict]:
+    """Historial del Caparazón: operaciones de todas las cajitas (incluidas las archivadas)."""
+    return [detallar(m) for m in repo_mov.listar_de_cajitas(con, id_usuario, cantidad)]
 
 
 def _nombre(nombre: str) -> str:

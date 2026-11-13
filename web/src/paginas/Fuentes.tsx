@@ -112,7 +112,7 @@ export default function Fuentes() {
             Una fuente es lo que te genera ingresos: un vehículo, un negocio, tu sueldo.
           </Vacio>
         ) : (
-          <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+          <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
             {lista.datos.map((f) => (
               <li key={f.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">

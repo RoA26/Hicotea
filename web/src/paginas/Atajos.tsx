@@ -125,7 +125,7 @@ function FormAtajo({
         </div>
 
         {creandoCat ? (
-          <div className="mb-3 rounded-xl border border-borde bg-superficie-2 p-3 space-y-2">
+          <div className="mb-3 rounded-control border border-borde bg-superficie-2 p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-texto">
                 Nueva categoría de {f.tipo === 'INGRESO' ? 'Ingreso' : 'Gasto'}
@@ -386,7 +386,7 @@ function PanelCategorias() {
               </Boton>
             }
           >
-            <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+            <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
               {(lista.datos ?? [])
                 .filter((c) => c.tipo === t)
                 .map((c) => (
@@ -435,7 +435,7 @@ export default function Atajos() {
       <Encabezado titulo="Atajos" subtitulo="Operaciones frecuentes de un toque y gestión de categorías." />
 
       {/* Selector de pestaña */}
-      <div role="tablist" className="mb-6 flex gap-1 rounded-xl border border-borde bg-superficie-2 p-1">
+      <div role="tablist" className="mb-6 flex gap-1 rounded-control border border-borde bg-superficie-2 p-1">
         <button
           type="button"
           role="tab"

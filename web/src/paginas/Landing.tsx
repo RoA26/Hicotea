@@ -48,7 +48,7 @@ export default function Landing() {
           {PUNTOS.map((p, i) => (
             <div
               key={p.titulo}
-              className="anim-escalonado rounded-2xl border border-borde bg-superficie/80 p-5 backdrop-blur-xs"
+              className="anim-escalonado rounded-tarjeta border border-borde bg-superficie/80 p-5 backdrop-blur-xs"
               style={{ animationDelay: `${240 + i * 80}ms` }}
             >
               <h2 className="font-semibold">{p.titulo}</h2>

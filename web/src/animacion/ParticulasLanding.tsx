@@ -1,3 +1,4 @@
+import { movimientoReducido } from '../tema/preferencias'
 import { useEffect, useRef } from 'react'
 
 interface Particula {
@@ -26,7 +27,7 @@ export function ParticulasLanding() {
     if (!ctx) return
 
     // Si el usuario prefiere movimiento reducido, no animamos
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reduceMotion = movimientoReducido() // prefers-reduced-motion o preferencia "reducido"
     if (reduceMotion) return
 
     let animId: number

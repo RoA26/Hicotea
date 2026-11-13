@@ -1,0 +1,164 @@
+/* ============================================================================
+   Natura — primera dirección artística completa (referencia: docs/prototipos/hicotea-design-lab.html).
+   Orgánica, cálida y amable: crema, oliva y salvia, geometría redondeada,
+   titulares con serifa (fuentes del sistema: sin descargas, funciona offline),
+   sombras suaves y movimiento sutil.
+
+   Ejes (tema/preferencias.ts):
+     data-estilo="natura"  ×  data-theme (sin atributo = oscuro, "light" = claro)  ×  data-paleta
+   Paletas: bosque (por defecto), arena, terracota, salvia. Claro y oscuro para las cuatro.
+   Todos los pares críticos pasan WCAG AA (≥ 4,5:1), verificado con
+   `node web/scripts/contraste.mjs` (datos en web/scripts/contraste-paletas.json). --gasto y --aviso son comunes a las paletas y
+   se validaron aparte; el gasto conserva su textura rayada en gráficas.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- forma y tipo */
+[data-estilo='natura'] {
+  --radio-tarjeta: 22px;
+  --radio-control: 14px;
+  --radio-modal: 28px;
+  --borde-ancho: 1px;
+  --fuente-titulo: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --peso-titulo: 600;
+  --tracking-titulo: -0.01em;
+  --peso-cifra: 600;
+  --duracion-corta: 180ms;
+  --duracion-media: 300ms;
+  --duracion-larga: 480ms;
+  --curva-salida: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --curva-estandar: cubic-bezier(0.4, 0, 0.2, 1);
+  --desplazamiento-entrada: 6px;
+}
+
+/* ---------------------------------------------------------------- oscuro (por defecto) */
+[data-estilo='natura']:not([data-theme='light']) {
+  --fondo: #14170f;
+  --superficie: #1c2016;
+  --superficie-2: #252a1e;
+  --borde: #3a4130;
+  --texto: #f1ede2;
+  --texto-suave: #b3b8a3;
+  --texto-sobre-acento: #14170f;
+  --acento: #a9c08c;
+  --acento-vivo: #c9d18a;
+  --ingreso: #a9c08c;
+  --gasto: #f0948a;
+  --aviso: #e6bc68;
+  --serie-1: #a9c08c;
+  --serie-2: #d9b48f;
+  --serie-3: #9fc3cc;
+  --serie-4: #d3a9c6;
+  --serie-5: #e8a58f;
+  --serie-6: #c9d18a;
+  --texto-sobre-serie: #14170f;
+  --velo: rgb(10 12 6 / 0.6);
+  --sombra-tarjeta: 0 1px 2px rgb(0 0 0 / 0.25), 0 10px 28px -16px rgb(0 0 0 / 0.55);
+  --sombra-elevada: 0 2px 4px rgb(0 0 0 / 0.3), 0 18px 40px -18px rgb(0 0 0 / 0.6);
+}
+[data-estilo='natura'][data-paleta='arena']:not([data-theme='light']) {
+  --fondo: #18140f;
+  --superficie: #211c16;
+  --superficie-2: #2b241c;
+  --borde: #43392c;
+  --texto: #f3ece0;
+  --texto-suave: #bdb09e;
+  --texto-sobre-acento: #18140f;
+  --acento: #d9b48f;
+  --acento-vivo: #e6c9a6;
+  --serie-1: #d9b48f;
+  --serie-2: #a9c08c;
+  --serie-5: #e8a58f;
+  --texto-sobre-serie: #18140f;
+}
+[data-estilo='natura'][data-paleta='terracota']:not([data-theme='light']) {
+  --fondo: #1a1311;
+  --superficie: #231a17;
+  --superficie-2: #2e221e;
+  --borde: #47362f;
+  --texto: #f6ebe5;
+  --texto-suave: #c4ada3;
+  --texto-sobre-acento: #1a1311;
+  --acento: #e8a58f;
+  --acento-vivo: #f0bfa9;
+  --serie-1: #e8a58f;
+  --serie-2: #a9c08c;
+  --serie-5: #d9b48f;
+  --texto-sobre-serie: #1a1311;
+}
+[data-estilo='natura'][data-paleta='salvia']:not([data-theme='light']) {
+  --fondo: #121612;
+  --superficie: #1a1f1a;
+  --superficie-2: #232a23;
+  --borde: #36403a;
+  --texto: #eef2ea;
+  --texto-suave: #adb9ad;
+  --texto-sobre-acento: #121612;
+  --acento: #9cc2a5;
+  --acento-vivo: #b9d3bf;
+  --serie-1: #9cc2a5;
+  --serie-2: #d9b48f;
+  --texto-sobre-serie: #121612;
+}
+
+/* ---------------------------------------------------------------- claro */
+[data-estilo='natura'][data-theme='light'] {
+  --fondo: #f4efe6;
+  --superficie: #fffdf5;
+  --superficie-2: #ebe6d8;
+  --borde: #d5dcc9;
+  --texto: #243226;
+  --texto-suave: #5a6853;
+  --texto-sobre-acento: #ffffff;
+  --acento: #526b43;
+  --acento-vivo: #647a55;
+  --ingreso: #4a6a3c;
+  --gasto: #a63743;
+  --aviso: #8a5a00;
+  --serie-1: #526b43;
+  --serie-2: #8b613b;
+  --serie-3: #4f6f7a;
+  --serie-4: #7a4f6b;
+  --serie-5: #984f3c;
+  --serie-6: #5d6b2f;
+  --texto-sobre-serie: #ffffff;
+  --velo: rgb(36 50 38 / 0.45);
+  --sombra-tarjeta: 0 1px 2px rgb(60 50 30 / 0.06), 0 10px 28px -16px rgb(60 50 30 / 0.22);
+  --sombra-elevada: 0 2px 4px rgb(60 50 30 / 0.08), 0 18px 40px -18px rgb(60 50 30 / 0.3);
+}
+[data-estilo='natura'][data-paleta='arena'][data-theme='light'] {
+  --fondo: #f2e8d8;
+  --superficie: #fff8ee;
+  --superficie-2: #ebdfcb;
+  --borde: #e2d1b8;
+  --texto: #594432;
+  --texto-suave: #6e5946;
+  --acento: #8b613b;
+  --acento-vivo: #78634e;
+  --serie-1: #8b613b;
+  --serie-2: #526b43;
+}
+[data-estilo='natura'][data-paleta='terracota'][data-theme='light'] {
+  --fondo: #f8eee5;
+  --superficie: #fffaf6;
+  --superficie-2: #f0e2d6;
+  --borde: #e4cfc1;
+  --texto: #593e35;
+  --texto-suave: #76594e;
+  --acento: #984f3c;
+  --acento-vivo: #85695e;
+  --serie-1: #984f3c;
+  --serie-2: #526b43;
+  --serie-5: #8b613b;
+}
+[data-estilo='natura'][data-paleta='salvia'][data-theme='light'] {
+  --fondo: #ecf0e6;
+  --superficie: #fcfdf9;
+  --superficie-2: #e1e8da;
+  --borde: #d5e0d1;
+  --texto: #3d5041;
+  --texto-suave: #5a6b5c;
+  --acento: #4f7158;
+  --acento-vivo: #687b6b;
+  --serie-1: #4f7158;
+  --serie-2: #8b613b;
+}

@@ -3,18 +3,21 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { TransicionPagina } from '../animacion/TransicionPagina'
 import { FUNCIONES } from '../lib/funciones'
 import { useTema } from '../tema/tema'
+import { AjustesApariencia } from './AjustesApariencia'
 import { useSesion } from './Globales'
+import { Modal } from './Modal'
 import { Icono, type NombreIcono } from './Iconos'
 import { Wordmark } from './Marca'
 import { cx } from './ui'
 
-const MENU: { a: string; texto: string; icono: NombreIcono }[] = [
+/** `tambien`: otras rutas que cuentan como esa sección (p. ej. el detalle de una cajita está en Caparazón). */
+const MENU: { a: string; texto: string; icono: NombreIcono; tambien?: string[] }[] = [
   { a: '/inicio', texto: 'Inicio', icono: 'inicio' },
   { a: '/movimientos', texto: 'Movimientos', icono: 'movimientos' },
   { a: '/calendario', texto: 'Calendario', icono: 'calendario' },
   { a: '/fuentes', texto: 'Fuentes de ingreso', icono: 'fuentes' },
-  { a: '/cajitas', texto: 'Cajitas', icono: 'cajitas' },
-  { a: '/metas', texto: 'Metas', icono: 'metas' },
+  // Caparazón reúne cajitas, metas, reparto e historial de ahorro (Cajitas y Metas ya no son entradas aparte).
+  { a: '/caparazon', texto: 'Caparazón', icono: 'cajitas', tambien: ['/cajitas', '/metas'] },
   { a: '/presupuestos', texto: 'Presupuestos', icono: 'presupuestos' },
   { a: '/recurrentes', texto: 'Recurrentes', icono: 'recurrentes' },
   { a: '/atajos', texto: 'Atajos', icono: 'atajos' },
@@ -26,6 +29,8 @@ type Tema = ReturnType<typeof useTema>
 
 function Navegacion({ alElegir, tema: { tema, alternar } }: { alElegir?: () => void; tema: Tema }) {
   const { usuario, salir } = useSesion()
+  const { pathname } = useLocation()
+  const [ajustes, setAjustes] = useState(false)
   return (
     <div className="flex h-full flex-col">
       <Link to="/inicio" onClick={alElegir} className="px-4 py-4" aria-label="Hicotea, ir a Inicio">
@@ -39,8 +44,10 @@ function Navegacion({ alElegir, tema: { tema, alternar } }: { alElegir?: () => v
             onClick={alElegir}
             className={({ isActive }) =>
               cx(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors',
-                isActive ? 'bg-acento/10 font-semibold text-acento' : 'text-texto-suave hover:bg-superficie-2 hover:text-texto',
+                'flex items-center gap-3 rounded-control px-3 py-2.5 text-sm transition-colors',
+                isActive || m.tambien?.some((r) => pathname.startsWith(r))
+                  ? 'bg-acento/10 font-semibold text-acento'
+                  : 'text-texto-suave hover:bg-superficie-2 hover:text-texto',
               )
             }
           >
@@ -53,15 +60,26 @@ function Navegacion({ alElegir, tema: { tema, alternar } }: { alElegir?: () => v
         <button
           type="button"
           onClick={alternar}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-texto-suave hover:bg-superficie-2 hover:text-texto"
+          className="flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-sm text-texto-suave hover:bg-superficie-2 hover:text-texto"
         >
           <Icono nombre={tema === 'oscuro' ? 'sol' : 'luna'} />
           {tema === 'oscuro' ? 'Tema claro' : 'Tema oscuro'}
         </button>
         <button
           type="button"
+          onClick={() => setAjustes(true)}
+          className="flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-sm text-texto-suave hover:bg-superficie-2 hover:text-texto"
+        >
+          <Icono nombre="categorias" />
+          Estilo y apariencia
+        </button>
+        <Modal abierto={ajustes} onCerrar={() => setAjustes(false)} titulo="Estilo y apariencia">
+          {ajustes && <AjustesApariencia />}
+        </Modal>
+        <button
+          type="button"
           onClick={salir}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-texto-suave hover:bg-superficie-2 hover:text-texto"
+          className="flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-sm text-texto-suave hover:bg-superficie-2 hover:text-texto"
         >
           <Icono nombre="salir" />
           <span className="min-w-0 flex-1 truncate text-left">
@@ -102,7 +120,7 @@ export function Marco({ children }: { children?: ReactNode }) {
       {/* Cajón en móvil */}
       <div className={cx('fixed inset-0 z-40 lg:hidden', !abierto && 'pointer-events-none')} aria-hidden={!abierto}>
         <div
-          className={cx('absolute inset-0 bg-black/60 transition-opacity duration-200', abierto ? 'opacity-100' : 'opacity-0')}
+          className={cx('absolute inset-0 bg-[var(--velo)] transition-opacity duration-200', abierto ? 'opacity-100' : 'opacity-0')}
           onClick={() => setAbierto(false)}
         />
         <aside
@@ -121,7 +139,7 @@ export function Marco({ children }: { children?: ReactNode }) {
           type="button"
           onClick={() => setAbierto(true)}
           aria-label="Abrir menú"
-          className="grid size-11 place-items-center rounded-xl text-texto-suave hover:text-texto"
+          className="grid size-11 place-items-center rounded-control text-texto-suave hover:text-texto"
         >
           <Icono nombre="menu" className="size-6" />
         </button>
@@ -130,7 +148,8 @@ export function Marco({ children }: { children?: ReactNode }) {
         </Link>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-5 pb-24 sm:px-6 lg:pt-8">
+      {/* Pantallas de trabajo amplias (calendario, Caparazón) aprovechan monitores grandes. */}
+      <main className={cx('mx-auto w-full px-4 pt-5 pb-24 sm:px-6 lg:pt-8', /^\/(calendario|caparazon)/.test(pathname) ? 'max-w-7xl' : 'max-w-5xl')}>
         <TransicionPagina>{children ?? <Outlet />}</TransicionPagina>
       </main>
     </div>

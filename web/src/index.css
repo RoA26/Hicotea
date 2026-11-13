@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./tema/tokens.css";
+@import "./tema/estilos/natura.css";
 
 @layer base {
   html {
@@ -11,12 +12,18 @@
   }
   body {
     @apply bg-fondo text-texto antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--fuente-texto);
     min-height: 100dvh;
   }
   /* Montos alineados en tablas y contadores. */
   .cifra {
     font-variant-numeric: tabular-nums;
+    font-family: var(--fuente-cifra);
+    font-style: var(--estilo-cifra);
+  }
+  h1,
+  h2 {
+    font-family: var(--fuente-titulo);
   }
   input,
   select,
@@ -40,7 +47,7 @@
 @keyframes modalEntrada {
   0% {
     opacity: 0;
-    transform: translateY(16px) scale(0.97);
+    transform: translateY(calc(var(--desplazamiento-entrada) * 2)) scale(0.97);
   }
   100% {
     opacity: 1;
@@ -60,7 +67,7 @@
 @keyframes itemEscalonado {
   0% {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(var(--desplazamiento-entrada));
   }
   100% {
     opacity: 1;
@@ -69,15 +76,38 @@
 }
 
 .anim-modal {
-  animation: modalEntrada 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalEntrada calc(var(--duracion-media) + 20ms) var(--curva-salida) forwards;
 }
 
 .anim-fondo {
-  animation: fondoEntrada 200ms ease-out forwards;
+  animation: fondoEntrada calc(var(--duracion-corta) + 40ms) ease-out forwards;
 }
 
 .anim-escalonado {
-  animation: itemEscalonado 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: itemEscalonado var(--duracion-media) var(--curva-salida) forwards;
+}
+
+/* Placas del Caparazón: la elegida crece un poco (solo transform) y el foco de teclado se ve. */
+.placa-caparazon {
+  transform-box: view-box;
+  transition: transform var(--duracion-corta) var(--curva-salida);
+  outline: none;
+}
+.placa-caparazon[data-elegida] {
+  transform: scale(1.07);
+}
+.placa-caparazon:focus-visible > polygon:first-child {
+  stroke: var(--acento);
+  stroke-width: 4;
+}
+
+/* data-movimiento="reducido" (preferencia del usuario o del sistema) apaga las animaciones igual que la media query. */
+[data-movimiento='reducido'] *,
+[data-movimiento='reducido'] ::before,
+[data-movimiento='reducido'] ::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -80,7 +80,7 @@ export default function Categorias() {
                 </Boton>
               }
             >
-              <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+              <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
                 {(lista.datos ?? [])
                   .filter((c) => c.tipo === t)
                   .map((c) => (

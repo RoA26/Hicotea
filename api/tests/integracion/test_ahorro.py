@@ -1,5 +1,9 @@
 """Cajitas (porcentajes RN-05, resto único, reparto RN-03/04), metas y presupuestos."""
 
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
+from app.db import motor
 from tests.integracion.conftest import HOY
 
 
@@ -110,3 +114,62 @@ def test_presupuesto_alerta_desde_el_ochenta_por_ciento(ana):
     assert len(p["presupuestos"]) == 1 and not p["presupuestos"][0]["en_alerta"]
     # No hay presupuestos de ingresos.
     assert ana.put("/api/presupuestos", json={"id_categoria": ana.cat("Salario"), "monto": "1"}).status_code == 422
+
+
+# ------------------------------------------------------------------ Caparazón: una meta activa por cajita
+
+
+def _meta(u, nombre, id_cajita, objetivo="100000"):
+    return u.post("/api/metas", json={"nombre": nombre, "monto_objetivo": objetivo, "id_cajita": id_cajita})
+
+
+def test_una_cajita_admite_una_sola_meta_activa(ana):
+    """H-03: antes, dos metas sobre la misma cajita contaban el mismo saldo."""
+    caja = ana.cajita("Viaje", saldo_inicial="100000")
+    otra = ana.cajita("Moto")
+    a = _meta(ana, "Cartagena", caja["id"]).json()
+    r = _meta(ana, "Bogotá", caja["id"])
+    assert r.status_code == 422 and "Cartagena" in r.json()["errores"]["id_cajita"]
+    # Tampoco al cambiar la cajita de otra meta activa ni al reactivar.
+    b = _meta(ana, "Bogotá", otra["id"]).json()
+    r = ana.put(f"/api/metas/{b['id']}", json={"nombre": "Bogotá", "monto_objetivo": "100000", "id_cajita": caja["id"]})
+    assert r.status_code == 422
+    ana.patch(f"/api/metas/{a['id']}/estado", json={"activa": False})
+    assert ana.put(f"/api/metas/{b['id']}", json={"nombre": "Bogotá", "monto_objetivo": "100000",
+                                                   "id_cajita": caja["id"]}).status_code == 200
+    assert ana.patch(f"/api/metas/{a['id']}/estado", json={"activa": True}).status_code == 422
+
+
+def test_el_indice_unico_respalda_la_regla(ana):
+    caja = ana.cajita("Viaje")
+    _meta(ana, "Cartagena", caja["id"])
+    with motor().begin() as c:
+        try:
+            c.execute(text("INSERT INTO meta (id_usuario, nombre, monto_objetivo, id_cajita) "
+                           "VALUES (:u, 'Directa', 1, :c)"), {"u": ana.id, "c": caja["id"]})
+        except IntegrityError as e:
+            assert "uq_meta_activa_por_cajita" in str(e)
+        else:
+            raise AssertionError("el índice no impidió una segunda meta activa")
+
+
+def test_una_meta_cumplida_archivada_conserva_su_logro(ana):
+    caja = ana.cajita("Viaje", saldo_inicial="120000")
+    m = _meta(ana, "Cartagena", caja["id"]).json()
+    assert m["cumplida"] is True
+    r = ana.patch(f"/api/metas/{m['id']}/estado", json={"activa": False}).json()
+    assert (r["cumplida_en"], r["monto_logrado"]) == (str(HOY), "100000.00")
+    # Se retira el dinero (se usó para el viaje): el logro histórico sigue.
+    ana.post(f"/api/cajitas/{caja['id']}/operaciones",
+             json={"operacion": "RETIRO", "fecha": str(HOY), "monto": "120000"})
+    r = ana.get(f"/api/metas/{m['id']}").json()
+    assert r["cumplida"] is True and r["porcentaje"] == 100
+    # La cajita queda libre para una meta nueva.
+    assert _meta(ana, "Santa Marta", caja["id"]).status_code == 201
+
+
+def test_archivar_una_meta_no_cumplida_no_inventa_logro(ana):
+    caja = ana.cajita("Viaje", saldo_inicial="10000")
+    m = _meta(ana, "Cartagena", caja["id"]).json()
+    r = ana.patch(f"/api/metas/{m['id']}/estado", json={"activa": False}).json()
+    assert r["cumplida_en"] is None and r["cumplida"] is False

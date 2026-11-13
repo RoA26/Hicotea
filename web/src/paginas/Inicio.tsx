@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { RecordatorioAyer } from '../componentes/RecordatorioAyer'
 import { atajos as apiAtajos, recurrentes, tablero } from '../api/cliente'
 import type { Atajo, Recurrente } from '../api/tipos'
 import { ConfirmarRecurrente } from '../componentes/ConfirmarRecurrente'
@@ -133,6 +134,7 @@ export default function Inicio() {
           t={t.datos}
           extra={
             <>
+              {t.datos.ayer_sin_registros && <RecordatorioAyer hoy={t.datos.hoy} />}
               <BotonesRapidos atajos={atajos.datos ?? []} alProducido={() => setProducido(true)} />
               <Pendientes lista={t.datos.pendientes} alConfirmar={setConfirmando} alOmitir={omitir} />
             </>

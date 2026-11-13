@@ -95,10 +95,13 @@ export type ProducidoForm = {
 
 export type CajitaForm = {
   nombre: string
+  descripcion?: string | null
   proposito: T.PropositoCajita
   porcentaje: string
   es_resto: boolean
   saldo_inicial?: string | null
+  /** Solo al crear: meta opcional que se crea en la misma transacción (Caparazón). */
+  meta?: { nombre?: string | null; monto_objetivo?: string | null; fecha_objetivo?: string | null } | null
 }
 
 export type MetaForm = {
@@ -156,6 +159,12 @@ export const tablero = {
   calendario: (mes?: string) => get<T.MesCalendario>('/calendario', { mes }),
 }
 
+/** C-04: días confirmados sin actividad (no son movimientos ni cambian saldos). */
+export const diasSinActividad = {
+  marcar: (fecha: string) => put<{ fecha: string; confirmado: boolean }>(`/dias-sin-actividad/${fecha}`),
+  quitar: (fecha: string) => del<{ fecha: string; confirmado: boolean }>(`/dias-sin-actividad/${fecha}`),
+}
+
 export const movimientos = {
   listar: (f: T.FiltroMovimientos = {}) => get<T.PaginaMovimientos>('/movimientos', f),
   obtener: (id: number) => get<T.Movimiento>(`/movimientos/${id}`),
@@ -184,6 +193,8 @@ export const fuentes = {
 
 export const cajitas = {
   listar: () => get<T.Cajita[]>('/cajitas'),
+  /** Historial del Caparazón: operaciones de todas las cajitas, incluidas las archivadas. */
+  historial: () => get<T.Movimiento[]>('/cajitas/historial'),
   obtener: (id: number) => get<T.Cajita>(`/cajitas/${id}`),
   movimientos: (id: number) => get<T.Movimiento[]>(`/cajitas/${id}/movimientos`),
   crear: (f: CajitaForm) => post<T.Cajita>('/cajitas', f),
@@ -202,6 +213,8 @@ export const metas = {
   crear: (f: MetaForm) => post<T.Meta>('/metas', f),
   actualizar: (id: number, f: MetaForm) => put<T.Meta>(`/metas/${id}`, f),
   estado: (id: number, activa: boolean) => patch<T.Meta>(`/metas/${id}/estado`, { activa }),
+  /** Celebrar y guardar el logro de una meta cumplida: la archiva sin mover dinero. */
+  logro: (id: number) => post<T.Meta>(`/metas/${id}/logro`),
   eliminar: (id: number) => del<void>(`/metas/${id}`),
 }
 
@@ -228,7 +241,8 @@ export const atajos = {
   listar: () => get<T.Atajo[]>('/atajos'),
   crear: (f: AtajoForm) => post<T.Atajo>('/atajos', f),
   eliminar: (id: number) => del<void>(`/atajos/${id}`),
-  usar: (id: number) => post<T.RespuestaConSaldo>(`/atajos/${id}/usar`),
+  /** `fecha` = fecha efectiva para registrar en un día pasado (C-03); sin ella, hoy. */
+  usar: (id: number, fecha?: string) => post<T.RespuestaConSaldo>(`/atajos/${id}/usar`, fecha ? { fecha } : undefined),
 }
 
 export const compartir = {

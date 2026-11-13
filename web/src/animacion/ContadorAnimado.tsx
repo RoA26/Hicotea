@@ -1,6 +1,7 @@
 import type { AnimationPlaybackControls } from 'motion'
 import { useLayoutEffect, useRef } from 'react'
 import { dinero, numero } from '../lib/formato'
+import { movimientoReducido } from '../tema/preferencias'
 
 interface Props {
   valor: string | number
@@ -45,7 +46,7 @@ export function ContadorAnimado({ valor, className, duracion = 450, esDinero = t
       el.textContent = esDinero ? dinero(n) : Math.round(n).toLocaleString('es-CO')
     }
     const inicio = visible.current
-    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reducido = movimientoReducido() // prefers-reduced-motion o preferencia "reducido"
     if (inicio === null || inicio === destino || reducido) {
       pintar(destino)
       return

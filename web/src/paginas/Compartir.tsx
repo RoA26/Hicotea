@@ -64,7 +64,7 @@ export default function Compartir() {
             ) : concedidos.datos.length === 0 ? (
               <Vacio>Nadie más ve tu cuenta.</Vacio>
             ) : (
-              <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+              <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
                 {concedidos.datos.map((a) => (
                   <li key={a.id} className="flex items-center gap-3 px-4 py-3">
                     <div className="min-w-0 flex-1">
@@ -90,7 +90,7 @@ export default function Compartir() {
           ) : recibidos.datos.length === 0 ? (
             <Vacio>Nadie te ha compartido su cuenta todavía.</Vacio>
           ) : (
-            <ul className="divide-y divide-borde rounded-2xl border border-borde bg-superficie">
+            <ul className="divide-y divide-borde rounded-tarjeta border border-borde bg-superficie">
               {recibidos.datos.map((a) => (
                 <li key={a.id}>
                   <Link to={`/compartido/${a.id_titular}`} className="flex items-center gap-3 px-4 py-3 hover:bg-superficie-2">

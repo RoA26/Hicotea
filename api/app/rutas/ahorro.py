@@ -25,7 +25,7 @@ from app.esquemas.salidas import (
 from app.modelo import dinero, reloj
 from app.rutas.movimientos import con_saldo
 from app.seguridad.dependencias import Con, IdUsuario
-from app.servicios import cajitas, metas, presupuestos, recurrentes
+from app.servicios import cajitas, caparazon, metas, presupuestos, recurrentes
 
 router = APIRouter(prefix="/api", tags=["ahorro"])
 
@@ -50,6 +50,12 @@ def confirmar_reparto(form: RepartoForm, u: IdUsuario, con: Con):
     return {"mensaje": f"Repartiste {dinero.formatear(total)}.", "total": total}
 
 
+@router.get("/cajitas/historial", response_model=list[MovimientoOut])
+def historial_ahorro(u: IdUsuario, con: Con):
+    """Últimas operaciones de todas las cajitas (historial del Caparazón)."""
+    return cajitas.movimientos_de_ahorro(con, u)
+
+
 @router.get("/cajitas/{id_cajita}", response_model=CajitaOut)
 def obtener_cajita(id_cajita: int, u: IdUsuario, con: Con):
     return cajitas.obtener(con, u, id_cajita)
@@ -62,7 +68,8 @@ def movimientos_cajita(id_cajita: int, u: IdUsuario, con: Con):
 
 @router.post("/cajitas", response_model=CajitaOut, status_code=status.HTTP_201_CREATED)
 def crear_cajita(form: CajitaForm, u: IdUsuario, con: Con):
-    return cajitas.crear(con, u, form)
+    """Con `meta` opcional: cajita y meta se crean juntas o ninguna (Caparazón)."""
+    return caparazon.crear_cajita(con, u, form)
 
 
 @router.put("/cajitas/{id_cajita}", response_model=CajitaOut)
@@ -108,6 +115,12 @@ def actualizar_meta(id_meta: int, form: MetaForm, u: IdUsuario, con: Con):
 @router.patch("/metas/{id_meta}/estado", response_model=MetaOut)
 def estado_meta(id_meta: int, form: EstadoForm, u: IdUsuario, con: Con):
     return metas.cambiar_estado(con, u, id_meta, form.activa)
+
+
+@router.post("/metas/{id_meta}/logro", response_model=MetaOut)
+def reconocer_logro(id_meta: int, u: IdUsuario, con: Con):
+    """Celebrar y guardar el logro de una meta cumplida: la archiva sin mover dinero."""
+    return metas.reconocer_logro(con, u, id_meta)
 
 
 @router.delete("/metas/{id_meta}", status_code=status.HTTP_204_NO_CONTENT)

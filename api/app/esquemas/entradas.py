@@ -72,12 +72,22 @@ class ProducidoForm(BaseModel):
     id_categoria_costo: int | None = None
 
 
+class MetaNuevaForm(BaseModel):
+    """Meta opcional que se crea junto con la cajita (misma transacción)."""
+
+    nombre: Annotated[str, Field(max_length=60)] | None = None  # vacío = nombre de la cajita
+    monto_objetivo: TextoMonto | None = None
+    fecha_objetivo: date | None = None
+
+
 class CajitaForm(BaseModel):
     nombre: Annotated[Nombre, Field(max_length=40)]
+    descripcion: Annotated[str, Field(max_length=200)] | None = None
     proposito: PropositoCajita
     porcentaje: Annotated[Decimal, Field(ge=0, le=100, decimal_places=2)] = Decimal(0)
     es_resto: bool = False
     saldo_inicial: TextoMonto | None = None
+    meta: MetaNuevaForm | None = None  # solo al crear
 
 
 class OperacionCajitaForm(BaseModel):
@@ -135,3 +145,9 @@ class AtajoForm(BaseModel):
 
 class CompartirForm(BaseModel):
     nombre_usuario: Annotated[str, Field(min_length=1, max_length=30)]
+
+
+class UsoAtajoForm(BaseModel):
+    """C-03: usar un atajo en una fecha pasada (registro retrospectivo). Sin fecha = hoy."""
+
+    fecha: date | None = None
