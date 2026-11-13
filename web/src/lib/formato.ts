@@ -18,14 +18,34 @@ export function montoEditable(monto: string | null | undefined): string {
 
 export const numero = (monto: string | number | null | undefined) => Number(monto ?? 0)
 
+const MILES_CON_PUNTO = /^\d{1,3}(\.\d{3})+$/
+const NUMERO = /^[+]?(\d+\.?\d*|\.\d+)$/
+
 /**
- * Normaliza un porcentaje numérico a la escala 0-100.
- * Si viene una fracción decimal (ej. 0.05 en vez de 5), la interpreta como 5.
+ * Lee un monto escrito por el usuario con las mismas reglas que la API
+ * (api/app/modelo/dinero.py → parsear): "85000", "85.000", "$ 85.000", "85.000,50".
+ * Devuelve `null` si está vacío, 0 si son solo ceros (la API los omite en el
+ * reparto) y `NaN` si no es un monto válido. Solo sirve para mostrar sumas en
+ * vivo: la API sigue siendo quien valida.
+ */
+export function parsearMonto(texto: string | null | undefined): number | null {
+  let limpio = (texto ?? '').replace(/[$\s ]/g, '')
+  if (limpio === '') return null
+  if (limpio.includes(',')) limpio = limpio.replace(/\./g, '').replace(',', '.')
+  else if (MILES_CON_PUNTO.test(limpio)) limpio = limpio.replace(/\./g, '')
+  if (!NUMERO.test(limpio) || (limpio.split('.')[1] ?? '').length > 2) return NaN
+  const n = Number(limpio)
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN
+}
+
+/**
+ * Porcentaje como número en escala 0-100. La API siempre usa esa escala
+ * (NUMERIC(5,2) con CHECK 0..100): "0.50" es medio por ciento, no 50 %.
+ * No reinterpretar valores entre 0 y 1 como fracciones (ver docs/auditoria-foundations.md, F-01).
  */
 export function porcentajeNumero(valor: string | number | null | undefined): number {
   const n = Number(valor ?? 0)
-  if (!Number.isFinite(n)) return 0
-  return n > 0 && n < 1 ? Number((n * 100).toFixed(2)) : n
+  return Number.isFinite(n) ? n : 0
 }
 
 /**

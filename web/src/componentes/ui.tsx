@@ -33,7 +33,9 @@ export function Boton({
   ...p
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: Variante; chico?: boolean; cargando?: boolean }) {
   return (
-    <button type="button" className={cx(claseBoton(variante, chico), className)} disabled={cargando || p.disabled} {...p}>
+    // `disabled` va después del spread: si fuera antes, `p.disabled` lo pisaría y el botón seguiría
+    // activo mientras `cargando` (doble envío). Ver docs/auditoria-foundations.md, F-02.
+    <button type="button" {...p} className={cx(claseBoton(variante, chico), className)} disabled={cargando || p.disabled} aria-busy={cargando || undefined}>
       {cargando ? 'Un momento…' : children}
     </button>
   )
