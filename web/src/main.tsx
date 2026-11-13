@@ -10,7 +10,6 @@ import Atajos from './paginas/Atajos'
 import CajitaDetalle from './paginas/CajitaDetalle'
 import Cajitas from './paginas/Cajitas'
 import Calendario from './paginas/Calendario'
-import Categorias from './paginas/Categorias'
 import Compartido from './paginas/Compartido'
 import Compartir from './paginas/Compartir'
 import Fuentes from './paginas/Fuentes'
@@ -87,7 +86,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="/recurrentes/nuevo" element={<RecurrenteForm />} />
                   <Route path="/recurrentes/:id" element={<RecurrenteForm />} />
                   <Route path="/atajos" element={<Atajos />} />
-                  <Route path="/categorias" element={<Categorias />} />
+                  <Route path="/categorias" element={<Navigate to="/atajos" replace />} />
                   <Route path="/compartir" element={<Compartir />} />
                   <Route path="/compartido/:titular" element={<Compartido />} />
                 </Route>

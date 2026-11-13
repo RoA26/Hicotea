@@ -16,8 +16,7 @@ const MENU: { a: string; texto: string; icono: NombreIcono }[] = [
   { a: '/metas', texto: 'Metas', icono: 'metas' },
   { a: '/presupuestos', texto: 'Presupuestos', icono: 'presupuestos' },
   { a: '/recurrentes', texto: 'Recurrentes', icono: 'recurrentes' },
-  { a: '/atajos', texto: 'Botones rápidos', icono: 'atajos' },
-  { a: '/categorias', texto: 'Categorías', icono: 'categorias' },
+  { a: '/atajos', texto: 'Atajos', icono: 'atajos' },
   { a: '/compartir', texto: 'Compartir', icono: 'compartir' },
 ]
 
