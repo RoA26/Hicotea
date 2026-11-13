@@ -16,7 +16,7 @@ App web personal de finanzas: fuentes de ingreso con sus costos, gastos, cajitas
 | Capa | Eden (antes) | Hicotea |
 |---|---|---|
 | Frontend | Thymeleaf + Alpine.js + Tailwind | **Vite + React + TypeScript + Tailwind** (PWA) |
-| Animación | — | **Motion** (ex Framer Motion) + **Lenis** (scroll suave) |
+| Animación | — | CSS propio (`index.css`) + Canvas 2D (partículas de la landing) + **Motion** (`motion@14.7.1`, cargado bajo demanda desde `web/src/animacion/`). **Lenis no está instalado** |
 | Backend | Spring Boot 3 (Java) | **Python 3.12 + FastAPI** + Pydantic v2 |
 | BD | PostgreSQL + Flyway | **PostgreSQL** (mismo esquema) + **Alembic** |
 | Acceso a datos | JdbcClient | SQLAlchemy 2 Core (consultas explícitas, sin ORM pesado) |
@@ -49,6 +49,8 @@ hicotea/
 
 ## Módulos a portar (desde Eden)
 
+Integridad (2026-11-12): toda operación de dinero llama a `servicios/serializacion.serializar_finanzas` antes de leer saldos; no se recrea saldo en cajitas inactivas; correcciones con disponible negativo = 409 `DISPONIBLE_NEGATIVO` + `confirmar_negativo=true`. Ver `docs/decisiones-caparazon-calendario.md`.
+
 Tablas: `usuario`, `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recurrente`, `presupuesto`, `meta`, `acceso_compartido`, `recuperacion_contrasena`, `atajo`. **Se conservan las restricciones CHECK** de `movimiento` (`ck_movimiento_tipo`, `ck_movimiento_coherencia`).
 
 | Módulo | Pantallas | Lógica clave a preservar |
@@ -57,17 +59,20 @@ Tablas: `usuario`, `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recur
 | Tablero (inicio) | resumen, gráficas, botones rápidos | `Tablero`, `ResumenSaldo`, `ResumenPeriodo`, totales por categoría/día/mes |
 | Movimientos | lista (filtros, paginación), formulario, **producido del día** | coherencia tipo↔categoría↔cajita, `id_relacionado` (transferencias) |
 | Fuentes de ingreso | lista | `ResumenFuente` (ingreso − costos) |
-| Cajitas | lista, detalle, **reparto** | `CalculadoraReparto`, `PropuestaReparto`, `PropositoCajita` |
-| Metas | lista, formulario | `ProgresoMeta` (el ahorro se gestiona desde aquí) |
+| **Caparazón** (`/caparazon`; reúne Cajitas y Metas, que ya no tienen entrada propia) | tortuga + lista, detalle `/cajitas/:id`, **reparto** `/cajitas/reparto`, historial, archivo | `CalculadoraReparto`, `PropuestaReparto`, `ProgresoMeta`; una meta activa por cajita; logro explícito (`POST /metas/{id}/logro`) |
 | Presupuestos | lista | `EstadoPresupuesto` |
 | Recurrentes | lista, formulario, confirmación | `Frecuencia`, `Periodicidad` |
 | Categorías | lista | `TipoCategoria` |
-| Compartir | lista | `acceso_compartido` |
-| Calendario | mes | `MesCalendario`, `DiaCalendario` |
+| Compartir | lista (fuera del menú desde Foundations; `VITE_COMPARTIR=1` lo muestra) | `acceso_compartido` (datos y permisos intactos) |
+| Calendario (vivo) | mes con estados, detalle del día, registro retrospectivo | `MesCalendario`, `DiaCalendario` (ahorro aparte, `sin_registros`, `compromisos`) |
 | Atajos | botones rápidos | `POST /api/atajos/{id}/usar` + "Deshacer" |
 | Landing | `/` pública | quien tiene sesión va a `/inicio` |
 
 Se mantiene de Eden: móvil primero, sin barra inferior, menú lateral (drawer en móvil, fijo desde `lg`), modal de confirmación global, tema claro/oscuro guardado, PWA con modo offline.
+
+## Sistema de diseño
+
+Cuatro ejes independientes en `web/src/tema/preferencias.ts` (aplicados antes de pintar desde `index.html`): **estilo** (`data-estilo`: Original, Natura; IMPACT y REBEL preparados), **apariencia** (`data-theme`, más "sistema"), **paleta** (`data-paleta`) y **movimiento** (`data-movimiento`; `prefers-reduced-motion` siempre gana). Tokens de forma, tipo, movimiento y series en `tema/tokens.css`; estilos en `tema/estilos/*.css`. Usar `rounded-tarjeta` y `rounded-control`, no `rounded-2xl` ni `rounded-xl`. Contraste: `node web/scripts/contraste.mjs`. Detalle: `docs/decisiones-design-system.md`.
 
 ## Paleta (verde)
 
@@ -96,9 +101,10 @@ Idea visual: fondo casi negro con tinte verde y un degradado esmeralda→lima en
 
 ## Animación (inspirada en antigravity.google)
 
-- **Landing**: campo de partículas verdes que reacciona al cursor (canvas 2D; `react-three-fiber` solo si hace falta). Titular con entrada por palabras y scroll suave con Lenis.
-- **App**: transiciones de página cortas (fade + desplazamiento 8px, unos 200 ms), modales con spring, saldo con contador animado y listas con entrada escalonada.
-- **Reglas**: animar solo `transform` y `opacity`; respetar `prefers-reduced-motion`; la librería de partículas solo se carga en la landing.
+- **Landing**: campo de partículas verdes que reacciona al cursor (`animacion/ParticulasLanding.tsx`, canvas 2D; `react-three-fiber` solo si hace falta). Titular con entrada escalonada por CSS. Scroll suave (Lenis) **pendiente, no instalado**.
+- **App (estado real)**: transición de entrada de página por CSS (`TransicionPagina.tsx`, fade + 8px, 240 ms, sin salida), modal con entrada CSS (el spring con salida está pendiente, D-M6), saldo con `ContadorAnimado` (Motion `animate()`, sin renders por frame) y listas con entrada escalonada CSS.
+- **Reglas**: animar solo `transform` y `opacity`; respetar `prefers-reduced-motion`; la librería de partículas solo se carga en la landing; Motion se importa solo desde `web/src/animacion/` y con carga diferida mientras tenga un solo uso; las animaciones CSS que funcionan no se migran a Motion sin motivo.
+- Decisiones de movimiento, estilos artísticos (Original, Natura, IMPACT, REBEL), paletas y Wrapped: `docs/decisiones-foundations.md`. Auditoría: `docs/auditoria-foundations.md`.
 
 ## Reparto del trabajo
 
