@@ -1,23 +1,44 @@
 import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router'
+import { ContadorAnimado } from '../animacion/ContadorAnimado'
 import { cajitas as api, movimientos } from '../api/cliente'
 import type { OperacionCajita } from '../api/tipos'
 import { useAvisar, useConfirmar, useSaldo } from '../componentes/Globales'
 import { Icono } from '../componentes/Iconos'
 import { ListaMovimientos, tituloMovimiento } from '../componentes/ListaMovimientos'
 import { Modal } from '../componentes/Modal'
-import { AlertaError, Boton, Campo, Cargando, Encabezado, Entrada, EntradaMonto, ErrorCarga, Insignia, Seccion, Selector, Tarjeta, Vacio } from '../componentes/ui'
+import {
+  AlertaError,
+  Boton,
+  Campo,
+  Cargando,
+  Encabezado,
+  Entrada,
+  EntradaMonto,
+  ErrorCarga,
+  Insignia,
+  Seccion,
+  Segmentos,
+  Tarjeta,
+  Vacio,
+} from '../componentes/ui'
 import { useDatos, useEnvio } from '../lib/datos'
-import { dinero, hoy, NOMBRE_PROPOSITO, NOMBRE_TIPO_MOVIMIENTO, numero } from '../lib/formato'
+import {
+  dinero,
+  formatoPorcentaje,
+  hoy,
+  NOMBRE_PROPOSITO,
+  numero,
+} from '../lib/formato'
 import { useRegistroRapido } from '../lib/registro'
 import { FormCajita } from './Cajitas'
 
-const OPERACIONES: { valor: OperacionCajita; ayuda: string }[] = [
-  { valor: 'APORTE', ayuda: 'Pasa plata de lo disponible a esta cajita.' },
-  { valor: 'RETIRO', ayuda: 'Devuelve plata de la cajita a lo disponible.' },
-  { valor: 'RENDIMIENTO', ayuda: 'Intereses o ganancias que generó la cajita.' },
-  { valor: 'SALDO_INICIAL', ayuda: 'Plata que ya estaba guardada antes de usar Hicotea.' },
-]
+const AYUDA_OPERACION: Record<OperacionCajita, string> = {
+  APORTE: 'Pasa plata de lo disponible a esta cajita.',
+  RETIRO: 'Devuelve plata de la cajita a lo disponible.',
+  RENDIMIENTO: 'Intereses o ganancias generadas por el dinero en esta cajita.',
+  SALDO_INICIAL: 'Plata que ya estaba guardada antes de usar Hicotea.',
+}
 
 export default function CajitaDetalle() {
   const id = Number(useParams().id)
@@ -35,12 +56,26 @@ export default function CajitaDetalle() {
   if (!cajita.datos) return <Cargando />
   const c = cajita.datos
 
+  // Estadísticas calculadas del historial
+  const historial = movs.datos ?? []
+  const totalAportes = historial
+    .filter((m) => m.tipo === 'APORTE' || m.tipo === 'SALDO_INICIAL')
+    .reduce((s, m) => s + numero(m.monto), 0)
+  const totalRetiros = historial
+    .filter((m) => m.tipo === 'RETIRO')
+    .reduce((s, m) => s + numero(m.monto), 0)
+  const totalRendimientos = historial
+    .filter((m) => m.tipo === 'RENDIMIENTO')
+    .reduce((s, m) => s + numero(m.monto), 0)
+
   async function alEnviar(e: FormEvent) {
     e.preventDefault()
     const r = await enviar(() => api.operacion(id, op))
     if (r) {
       registrado(r)
       setOp((x) => ({ ...x, monto: '', descripcion: '' }))
+      void cajita.recargar()
+      void movs.recargar()
     }
   }
 
@@ -60,12 +95,22 @@ export default function CajitaDetalle() {
   }
 
   async function eliminar(idm: number, titulo: string) {
-    if (!(await confirmar({ titulo: 'Eliminar movimiento', mensaje: `Se eliminará "${titulo}".`, aceptar: 'Eliminar', peligro: true }))) return
+    if (
+      !(await confirmar({
+        titulo: 'Eliminar movimiento',
+        mensaje: `Se eliminará "${titulo}". El saldo se recalculará automáticamente.`,
+        aceptar: 'Eliminar',
+        peligro: true,
+      }))
+    )
+      return
     try {
       const r = await movimientos.eliminar(idm)
       setSaldo(r.saldo)
       avisarCambio()
       avisar(r.mensaje)
+      void cajita.recargar()
+      void movs.recargar()
     } catch (e) {
       avisar((e as Error).message, { tono: 'error' })
     }
@@ -76,9 +121,12 @@ export default function CajitaDetalle() {
       <Encabezado
         titulo={c.nombre}
         subtitulo={
-          <>
-            {NOMBRE_PROPOSITO[c.proposito]} · {c.es_resto ? 'recibe el resto' : `${numero(c.porcentaje)}% del reparto`} {!c.activa && <Insignia>Inactiva</Insignia>}
-          </>
+          <span className="flex flex-wrap items-center gap-2">
+            <span>{NOMBRE_PROPOSITO[c.proposito]}</span>
+            <span>·</span>
+            <span>{c.es_resto ? 'Recibe el resto del reparto' : `${formatoPorcentaje(c.porcentaje)} del reparto`}</span>
+            {!c.activa && <Insignia>Inactiva</Insignia>}
+          </span>
         }
         acciones={
           <>
@@ -91,56 +139,123 @@ export default function CajitaDetalle() {
           </>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
-        <div>
-          <Tarjeta>
-            <p className="text-sm text-texto-suave">Saldo</p>
-            <p className="cifra texto-degradado text-4xl font-bold">{dinero(c.saldo)}</p>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_1.4fr]">
+        <div className="space-y-4">
+          {/* Tarjeta principal de saldo */}
+          <Tarjeta className="p-5">
+            <p className="text-xs font-semibold tracking-wide text-texto-suave uppercase">
+              Saldo acumulado
+            </p>
+            <p className="cifra texto-degradado mt-1 text-4xl sm:text-5xl font-bold tracking-tight">
+              <ContadorAnimado valor={c.saldo} />
+            </p>
+
+            {/* Estadísticas de la cajita */}
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-borde pt-4">
+              <div>
+                <p className="text-xs text-texto-suave">Aportado</p>
+                <p className="cifra truncate text-sm font-semibold text-ingreso">
+                  +{dinero(totalAportes)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-texto-suave">Retirado</p>
+                <p className="cifra truncate text-sm font-semibold text-gasto">
+                  −{dinero(totalRetiros)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-texto-suave">Ganancias</p>
+                <p className="cifra truncate text-sm font-semibold text-acento">
+                  +{dinero(totalRendimientos)}
+                </p>
+              </div>
+            </div>
           </Tarjeta>
-          {c.activa && (
-            <Tarjeta className="mt-4">
+
+          {/* Formulario de operaciones contextual */}
+          {c.activa ? (
+            <Tarjeta className="p-5">
+              <h2 className="mb-3 text-sm font-semibold tracking-wide text-texto uppercase">
+                Registrar operación
+              </h2>
               <form onSubmit={alEnviar} className="space-y-4">
-                <Campo etiqueta="Operación" error={errores.operacion} ayuda={OPERACIONES.find((o) => o.valor === op.operacion)?.ayuda}>
-                  <Selector value={op.operacion} onChange={(e) => setOp({ ...op, operacion: e.target.value as OperacionCajita })}>
-                    {OPERACIONES.map((o) => (
-                      <option key={o.valor} value={o.valor}>
-                        {NOMBRE_TIPO_MOVIMIENTO[o.valor]}
-                      </option>
-                    ))}
-                  </Selector>
-                </Campo>
+                <Segmentos<OperacionCajita>
+                  valor={op.operacion}
+                  onCambio={(operacion) => setOp({ ...op, operacion })}
+                  opciones={[
+                    { valor: 'APORTE', etiqueta: 'Aporte', tono: 'acento' },
+                    { valor: 'RETIRO', etiqueta: 'Retiro', tono: 'gasto' },
+                    { valor: 'RENDIMIENTO', etiqueta: 'Rendimiento' },
+                  ]}
+                />
+
+                <p className="text-xs text-texto-suave">
+                  {AYUDA_OPERACION[op.operacion]}
+                </p>
+
                 <div className="grid grid-cols-2 gap-3">
                   <Campo etiqueta="Monto" error={errores.monto}>
-                    <EntradaMonto value={op.monto} onChange={(e) => setOp({ ...op, monto: e.target.value })} required />
+                    <EntradaMonto
+                      value={op.monto}
+                      onChange={(e) => setOp({ ...op, monto: e.target.value })}
+                      required
+                    />
                   </Campo>
                   <Campo etiqueta="Fecha" error={errores.fecha}>
-                    <Entrada type="date" value={op.fecha} max={hoy()} onChange={(e) => setOp({ ...op, fecha: e.target.value })} required />
+                    <Entrada
+                      type="date"
+                      value={op.fecha}
+                      max={hoy()}
+                      onChange={(e) => setOp({ ...op, fecha: e.target.value })}
+                      required
+                    />
                   </Campo>
                 </div>
-                <Campo etiqueta="Nota (opcional)">
-                  <Entrada value={op.descripcion} maxLength={200} onChange={(e) => setOp({ ...op, descripcion: e.target.value })} />
+
+                <Campo etiqueta="Nota descriptiva (opcional)">
+                  <Entrada
+                    value={op.descripcion}
+                    maxLength={200}
+                    placeholder="Ej. Aporte de quincena o pago seguro"
+                    onChange={(e) => setOp({ ...op, descripcion: e.target.value })}
+                  />
                 </Campo>
+
                 <AlertaError mensaje={error} />
+
                 <Boton type="submit" className="w-full" cargando={enviando}>
-                  Registrar
+                  Registrar {op.operacion === 'APORTE' ? 'Aporte' : op.operacion === 'RETIRO' ? 'Retiro' : 'Rendimiento'}
                 </Boton>
               </form>
             </Tarjeta>
+          ) : (
+            <div className="rounded-2xl border border-borde bg-superficie-2 p-4 text-center text-sm text-texto-suave">
+              Esta cajita está desactivada. Actívala para registrar aportes, retiros o rendimientos.
+            </div>
           )}
         </div>
-        <Seccion titulo="Historial">
+
+        {/* Historial de movimientos */}
+        <Seccion titulo={`Movimientos (${historial.length})`}>
           {movs.error ? (
             <ErrorCarga error={movs.error} reintentar={movs.recargar} />
           ) : !movs.datos ? (
             <Cargando />
-          ) : movs.datos.length === 0 ? (
-            <Vacio>Esta cajita todavía no tiene movimientos.</Vacio>
+          ) : historial.length === 0 ? (
+            <Vacio>Esta cajita todavía no tiene movimientos registrados.</Vacio>
           ) : (
             <ListaMovimientos
-              movimientos={movs.datos}
+              movimientos={historial}
               acciones={(m) =>
                 m.eliminable ? (
-                  <Boton chico variante="fantasma" aria-label="Eliminar" onClick={() => eliminar(m.id, tituloMovimiento(m))}>
+                  <Boton
+                    chico
+                    variante="fantasma"
+                    aria-label="Eliminar movimiento"
+                    onClick={() => eliminar(m.id, tituloMovimiento(m))}
+                  >
                     <Icono nombre="basura" className="size-4" />
                   </Boton>
                 ) : null
@@ -149,6 +264,7 @@ export default function CajitaDetalle() {
           )}
         </Seccion>
       </div>
+
       <Modal abierto={editar} onCerrar={() => setEditar(false)} titulo="Editar cajita">
         {editar && (
           <FormCajita

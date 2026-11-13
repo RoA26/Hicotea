@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ContadorAnimado } from '../animacion/ContadorAnimado'
 import type { Tablero } from '../api/tipos'
-import { dinero, fechaCorta, nombreMes, NOMBRE_PROPOSITO, numero } from '../lib/formato'
+import { dinero, fechaCorta, formatoPorcentaje, nombreMes, NOMBRE_PROPOSITO, numero } from '../lib/formato'
 import { GraficaCategorias, GraficaDias, GraficaMeses } from './Graficas'
 import { ListaMovimientos } from './ListaMovimientos'
 import { Barra, Cifra, Insignia, Seccion, Tarjeta, Vacio } from './ui'
@@ -153,7 +153,7 @@ export function VistaTablero({ t, extra, enlaces = true }: { t: Tablero; extra?:
                   <div className="min-w-0">
                     <p className="truncate font-medium">{c.nombre}</p>
                     <p className="text-xs text-texto-suave">
-                      {NOMBRE_PROPOSITO[c.proposito]} · {c.es_resto ? 'resto' : `${numero(c.porcentaje)}%`}
+                      {NOMBRE_PROPOSITO[c.proposito]} · {c.es_resto ? 'Resto' : formatoPorcentaje(c.porcentaje)}
                     </p>
                   </div>
                   <span className="cifra font-semibold">{dinero(c.saldo)}</span>

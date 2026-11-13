@@ -18,6 +18,25 @@ export function montoEditable(monto: string | null | undefined): string {
 
 export const numero = (monto: string | number | null | undefined) => Number(monto ?? 0)
 
+/**
+ * Normaliza un porcentaje numérico a la escala 0-100.
+ * Si viene una fracción decimal (ej. 0.05 en vez de 5), la interpreta como 5.
+ */
+export function porcentajeNumero(valor: string | number | null | undefined): number {
+  const n = Number(valor ?? 0)
+  if (!Number.isFinite(n)) return 0
+  return n > 0 && n < 1 ? Number((n * 100).toFixed(2)) : n
+}
+
+/**
+ * Formatea un porcentaje como valor humano legible (p. ej. "5%", "12,5%").
+ * Muestra valores enteros sin decimales innecesarios ("5%") y preserva decimales significativos ("12,5%").
+ */
+export function formatoPorcentaje(valor: string | number | null | undefined): string {
+  const pct = porcentajeNumero(valor)
+  return `${pesos.format(pct)}%`
+}
+
 /** Fecha de hoy en Bogotá como "YYYY-MM-DD" (la api valida "no futura" con esa zona). */
 export function hoy(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date())
