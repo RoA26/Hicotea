@@ -30,6 +30,10 @@
   --aviso: #d97706;
 }
 
+/* `dark:` sigue el tema de la app (data-theme), no el del sistema operativo.
+   Sin esto, Tailwind 4 usa prefers-color-scheme y `dark:` contradice el tema elegido. */
+@custom-variant dark (&:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *));
+
 @theme inline {
   --color-fondo: var(--fondo);
   --color-superficie: var(--superficie);
