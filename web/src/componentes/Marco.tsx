@@ -96,9 +96,47 @@ const BARRA: Entrada[] = [
   { a: '/calendario', texto: 'Calendario', icono: 'calendario' },
 ]
 
+/** Campos que abren el teclado virtual (no casillas, botones ni selectores de archivo). */
+const SIN_TECLADO = new Set(['checkbox', 'radio', 'range', 'button', 'submit', 'reset', 'color', 'file', 'image'])
+function abreTeclado(el: Element | null): boolean {
+  if (!el) return false
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly
+  if (el instanceof HTMLInputElement) return !el.readOnly && !SIN_TECLADO.has(el.type)
+  return el instanceof HTMLElement && el.isContentEditable
+}
+
+/**
+ * En pantallas táctiles, true mientras un campo de texto tiene el foco (el
+ * teclado virtual está abierto). La barra fija se esconde para no tapar el
+ * campo ni el botón de guardar: en iOS flota sobre el teclado y en Android
+ * ocupa el poco alto que queda.
+ */
+function useTecladoAbierto() {
+  const [abierto, setAbierto] = useState(false)
+  useEffect(() => {
+    if (!window.matchMedia('(pointer: coarse)').matches) return
+    const revisar = () => setAbierto(abreTeclado(document.activeElement))
+    // focusout llega antes de que el foco pase al siguiente campo: se revisa en el siguiente cuadro.
+    const alSalir = () => requestAnimationFrame(revisar)
+    document.addEventListener('focusin', revisar)
+    document.addEventListener('focusout', alSalir)
+    // Sin foco de ventana (otra app delante) el navegador no emite focusin: se revisa al volver.
+    window.addEventListener('focus', revisar)
+    // Un campo con autoFocus pudo enfocarse antes de que existiera el listener.
+    revisar()
+    return () => {
+      document.removeEventListener('focusin', revisar)
+      document.removeEventListener('focusout', alSalir)
+      window.removeEventListener('focus', revisar)
+    }
+  }, [])
+  return abierto
+}
+
 function BarraInferior({ alRegistrar, alMas, masAbierto }: { alRegistrar: () => void; alMas: () => void; masAbierto: boolean }) {
   const { pathname } = useLocation()
   const enBarra = BARRA.some((m) => activa(m, pathname))
+  const teclado = useTecladoAbierto()
   const item = (m: Entrada) => (
     <NavLink
       key={m.a}
@@ -116,7 +154,11 @@ function BarraInferior({ alRegistrar, alMas, masAbierto }: { alRegistrar: () => 
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      inert={teclado}
+      className={cx(
+        'fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur transition-transform duration-200 ease-out lg:hidden',
+        teclado && 'translate-y-full',
+      )}
     >
       <div className="mx-auto flex max-w-lg items-stretch px-1">
         {item(BARRA[0])}
