@@ -15,7 +15,7 @@ from sqlalchemy.engine import make_url
 from app.db import motor
 from app.main import app
 from app.modelo import reloj
-from app.seguridad.limitador import limitador
+from app.seguridad.limitador import reiniciar_todos
 
 URL_TEST = os.environ["HICOTEA_TEST_DATABASE_URL"]
 RAIZ_API = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -42,7 +42,7 @@ def base_de_datos():
 
 @pytest.fixture(autouse=True)
 def limpiar():
-    limitador.reiniciar()
+    reiniciar_todos()
     yield
     with motor().begin() as c:
         c.execute(text("TRUNCATE usuario RESTART IDENTITY CASCADE"))

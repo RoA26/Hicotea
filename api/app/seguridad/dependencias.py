@@ -28,3 +28,15 @@ def id_usuario_actual(usuario: UsuarioActual) -> int:
 
 
 IdUsuario = Annotated[int, Depends(id_usuario_actual)]
+
+
+def admin_actual(usuario: UsuarioActual) -> dict:
+    """Autorización real del panel: el rol se lee de la base en cada petición
+    (junto con la sesión), no de algo que mande el navegador. Quien no es
+    administrador recibe 403 aunque tenga sesión."""
+    if usuario.get("rol") != "ADMIN":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Esta sección es solo para administradores.")
+    return usuario
+
+
+AdminActual = Annotated[dict, Depends(admin_actual)]

@@ -29,8 +29,15 @@ class _Registro:
 
 
 class LimitadorIntentosLogin:
-    def __init__(self, reloj: Callable[[], float] = time.monotonic):
+    def __init__(
+        self,
+        reloj: Callable[[], float] = time.monotonic,
+        maximo_por_usuario: int = MAXIMO_POR_USUARIO_E_IP,
+        maximo_por_ip: int = MAXIMO_POR_IP,
+    ):
         self._reloj = reloj
+        self._max_usuario = maximo_por_usuario
+        self._max_ip = maximo_por_ip
         self._registros: dict[str, _Registro] = {}
         self._candado = threading.Lock()
 
@@ -43,8 +50,8 @@ class LimitadorIntentosLogin:
         ahora = self._reloj()
         with self._candado:
             self._limpiar_si_hace_falta(ahora)
-            self._sumar_fallo(_clave_usuario(ip, usuario), MAXIMO_POR_USUARIO_E_IP, ahora)
-            self._sumar_fallo(_clave_ip(ip), MAXIMO_POR_IP, ahora)
+            self._sumar_fallo(_clave_usuario(ip, usuario), self._max_usuario, ahora)
+            self._sumar_fallo(_clave_ip(ip), self._max_ip, ahora)
 
     def registrar_exito(self, ip: str, usuario: str) -> None:
         """Un inicio de sesión correcto borra los fallos de esa combinación IP + usuario."""
@@ -86,3 +93,19 @@ def _clave_ip(ip: str) -> str:
 
 
 limitador = LimitadorIntentosLogin()
+
+# Recuperación de contraseña, en dos contadores:
+#  - solicitudes de PIN: 5 por cuenta e IP y 15 por IP cada 15 minutos (frena
+#    el abuso del envío de correos y el ruido en el log);
+#  - PIN incorrectos: 10 por cuenta e IP y 30 por IP. Es un tope entre PIN
+#    distintos; el límite por PIN (5 intentos) sigue en la base de datos.
+limitador_recuperacion = LimitadorIntentosLogin(maximo_por_usuario=5, maximo_por_ip=15)
+limitador_pin = LimitadorIntentosLogin(maximo_por_usuario=10, maximo_por_ip=30)
+
+# Registro: solo cuentan los intentos fallidos (código o invitación inválidos).
+limitador_registro = LimitadorIntentosLogin(maximo_por_usuario=10, maximo_por_ip=10)
+
+
+def reiniciar_todos() -> None:
+    for x in (limitador, limitador_recuperacion, limitador_pin, limitador_registro):
+        x.reiniciar()

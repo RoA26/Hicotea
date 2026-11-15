@@ -5,9 +5,9 @@ from fastapi.responses import JSONResponse
 
 from app.config import config
 from app.errores import registrar_manejadores
-from app.rutas import ahorro, auth, catalogos, compartir, movimientos
+from app.rutas import admin, ahorro, auth, catalogos, compartir, movimientos
 
-config()  # falla al arrancar si falta configuración obligatoria (p. ej. el código de invitación)
+config()  # falla al arrancar si la configuración es inválida
 
 # Logs propios de la app (p. ej. el PIN de recuperación) en la consola del servidor.
 _log = logging.getLogger("hicotea")
@@ -35,7 +35,7 @@ async def verificar_origen(request: Request, call_next):
     return await call_next(request)
 
 
-for modulo in (auth, catalogos, movimientos, ahorro, compartir):
+for modulo in (auth, catalogos, movimientos, ahorro, compartir, admin):
     app.include_router(modulo.router)
 
 

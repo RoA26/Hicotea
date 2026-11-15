@@ -16,7 +16,7 @@ def crear(con: Connection, token_hash: str, id_usuario: int, duracion: timedelta
 def usuario_por_token(con: Connection, token_hash: str) -> dict | None:
     fila = con.execute(
         text(
-            "SELECT u.id, u.nombre_usuario, u.nombre_completo, u.activo, u.fecha_registro "
+            "SELECT u.id, u.nombre_usuario, u.nombre_completo, u.correo, u.rol, u.activo, u.fecha_registro "
             "FROM sesion s JOIN usuario u ON u.id = s.id_usuario "
             "WHERE s.token_hash = :t AND s.expira_en > now() AND u.activo"
         ),
@@ -35,5 +35,11 @@ def borrar_vencidas(con: Connection, id_usuario: int) -> None:
     )
 
 
-def borrar_todas(con: Connection, id_usuario: int) -> None:
-    con.execute(text("DELETE FROM sesion WHERE id_usuario = :u"), {"u": id_usuario})
+def borrar_todas(con: Connection, id_usuario: int) -> int:
+    return con.execute(text("DELETE FROM sesion WHERE id_usuario = :u"), {"u": id_usuario}).rowcount
+
+
+def contar_activas(con: Connection, id_usuario: int) -> int:
+    return con.execute(
+        text("SELECT COUNT(*) FROM sesion WHERE id_usuario = :u AND expira_en > now()"), {"u": id_usuario}
+    ).scalar_one()
