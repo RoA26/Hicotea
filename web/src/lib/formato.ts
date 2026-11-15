@@ -161,3 +161,7 @@ export const DESCRIPCION_PROPOSITO: Record<PropositoCajita, string> = {
   EMERGENCIA: 'Para imprevistos',
   LIBRE: 'Sin destino fijo',
 }
+
+const fmtFechaHora = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+/** Fecha y hora local de un instante ISO con zona (p. ej. "14 nov 2026, 3:05 p. m."). */
+export const fechaHora = (iso: string | null | undefined) => (iso ? fmtFechaHora.format(new Date(iso)).replace('.', '') : '—')

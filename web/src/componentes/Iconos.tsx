@@ -22,6 +22,14 @@ const TRAZOS = {
   lapiz: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   basura: 'M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13',
   ojo: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z',
+  // Administración y navegación móvil.
+  escudo: 'M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6zM9 12l2 2 4-4',
+  puntos: 'M5 12h.01M12 12h.01M19 12h.01',
+  filtro: 'M4 5h16l-6 8v5l-4 2v-7z',
+  copiar: 'M9 9h10v10H9zM5 15V5h10',
+  usuarios: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.5a4 4 0 010 7.5M22 21v-1a6 6 0 00-4-5.6',
+  sobre: 'M3 6h18v12H3zM3 7l9 6 9-6',
+  historial: 'M3 12a9 9 0 103-6.7L3 8M3 3v5h5M12 7v5l3 2',
 } as const
 
 export type NombreIcono = keyof typeof TRAZOS

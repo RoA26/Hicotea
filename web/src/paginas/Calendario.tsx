@@ -55,7 +55,7 @@ export default function Calendario() {
       ) : !datos ? (
         <Cargando />
       ) : (
-        <div className={cx('grid gap-6', plegado ? 'lg:grid-cols-[minmax(0,1fr)_auto]' : 'lg:grid-cols-[minmax(0,7fr)_minmax(18rem,3fr)]')}>
+        <div className={cx('grid grid-cols-1 gap-6', plegado ? 'lg:grid-cols-[minmax(0,1fr)_auto]' : 'lg:grid-cols-[minmax(0,7fr)_minmax(18rem,3fr)]')}>
           <div className="min-w-0">
             <VistaCalendario
               c={datos}

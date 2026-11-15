@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 import type { Movimiento } from '../api/tipos'
 import { fechaCorta, NOMBRE_TIPO_MOVIMIENTO } from '../lib/formato'
 import { Monto } from './ui'
@@ -16,8 +17,20 @@ function detalle(m: Movimiento): string {
   return partes.join(' · ')
 }
 
-/** Lista de movimientos; `acciones` pinta los botones de cada fila. */
-export function ListaMovimientos({ movimientos, acciones }: { movimientos: Movimiento[]; acciones?: (m: Movimiento) => ReactNode }) {
+/**
+ * Lista de movimientos; `acciones` pinta los botones de cada fila y `enlace`
+ * (si devuelve una ruta) hace que tocar la fila la abra: en el celular es la
+ * forma cómoda de editar, sin botones pequeños que le quiten espacio al texto.
+ */
+export function ListaMovimientos({
+  movimientos,
+  acciones,
+  enlace,
+}: {
+  movimientos: Movimiento[]
+  acciones?: (m: Movimiento) => ReactNode
+  enlace?: (m: Movimiento) => string | null
+}) {
   return (
     <ul className="divide-y divide-borde overflow-hidden rounded-tarjeta border border-borde bg-superficie">
       {movimientos.map((m, i) => (
@@ -26,11 +39,25 @@ export function ListaMovimientos({ movimientos, acciones }: { movimientos: Movim
           className="anim-escalonado flex items-center gap-3 px-4 py-3"
           style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
         >
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{tituloMovimiento(m)}</p>
-            <p className="truncate text-xs text-texto-suave">{detalle(m)}</p>
-          </div>
-          <Monto valor={m.monto} entrada={m.entrada} signo className="font-semibold" />
+          {(() => {
+            const ruta = enlace?.(m)
+            const contenido = (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{tituloMovimiento(m)}</span>
+                  <span className="block truncate text-xs text-texto-suave">{detalle(m)}</span>
+                </span>
+                <Monto valor={m.monto} entrada={m.entrada} signo className="font-semibold" />
+              </>
+            )
+            return ruta ? (
+              <Link to={ruta} className="-my-3 -ml-4 flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 hover:bg-superficie-2/40 focus-visible:outline-offset-[-2px]">
+                {contenido}
+              </Link>
+            ) : (
+              <div className="flex min-w-0 flex-1 items-center gap-3">{contenido}</div>
+            )
+          })()}
           {acciones && <div className="flex shrink-0 gap-1">{acciones(m)}</div>}
         </li>
       ))}

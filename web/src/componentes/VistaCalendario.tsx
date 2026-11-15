@@ -102,7 +102,7 @@ export function VistaCalendario({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="mr-auto text-xl font-semibold tracking-tight sm:text-2xl" aria-live="polite">
+        <h2 className="mr-auto basis-full text-xl font-semibold tracking-tight sm:basis-auto sm:text-2xl" aria-live="polite">
           {nombreMes(c.mes)}
         </h2>
         <div className="flex items-center gap-1 rounded-control border border-borde bg-superficie p-1">
@@ -121,11 +121,11 @@ export function VistaCalendario({
             <Icono nombre="derecha" className="size-4" />
           </Boton>
         </div>
-        <label className="flex items-center gap-2 text-sm text-texto-suave">
+        <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-texto-suave sm:flex-none">
           <span className="sr-only">Ir a un mes y año</span>
           <Entrada
             type="month"
-            className="h-9 w-auto"
+            className="h-11 w-full min-w-0 sm:h-9 sm:w-auto"
             value={c.mes}
             onChange={(e) => e.target.value && alCambiarMes(e.target.value)}
           />

@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { movimientos, type MovimientoForm as Form } from '../api/cliente'
 import type { TipoIngresoGasto } from '../api/tipos'
-import { useAvisar, useConfirmar } from '../componentes/Globales'
+import { useAvisar, useConfirmar, useSaldo } from '../componentes/Globales'
+import { Icono } from '../componentes/Iconos'
 import { SelectorCajita, SelectorCategoria, SelectorFuente } from '../componentes/Selectores'
 import { AlertaError, AvisoFecha, Boton, Campo, Cargando, Encabezado, Entrada, EntradaMonto, ErrorCarga, Segmentos, Tarjeta } from '../componentes/ui'
 import { categoriasPara, useCatalogos, type Catalogos } from '../lib/catalogos'
@@ -40,10 +41,31 @@ export default function MovimientoForm() {
         id_cajita_origen: null,
         descripcion: '',
       }
-  return <Formulario key={id ?? 'nuevo'} id={m?.id} inicial={inicial} catalogos={cat.datos} volver={rutaVolver(q.get('volver'))} />
+  return (
+    <Formulario
+      key={id ?? 'nuevo'}
+      id={m?.id}
+      eliminable={!!m?.eliminable}
+      inicial={inicial}
+      catalogos={cat.datos}
+      volver={rutaVolver(q.get('volver'))}
+    />
+  )
 }
 
-function Formulario({ id, inicial, catalogos, volver }: { id?: number; inicial: Form; catalogos: Catalogos; volver: string | null }) {
+function Formulario({
+  id,
+  eliminable,
+  inicial,
+  catalogos,
+  volver,
+}: {
+  id?: number
+  eliminable: boolean
+  inicial: Form
+  catalogos: Catalogos
+  volver: string | null
+}) {
   const editando = id !== undefined
   const navegar = useNavigate()
   const avisar = useAvisar()
@@ -52,6 +74,27 @@ function Formulario({ id, inicial, catalogos, volver }: { id?: number; inicial: 
   const { enviando, error, errores, enviar } = useEnvio()
   const [f, setF] = useState<Form>(inicial)
   const [desdeCajita, setDesdeCajita] = useState(false)
+  const { setSaldo, avisarCambio } = useSaldo()
+  const [eliminando, setEliminando] = useState(false)
+
+  async function eliminar() {
+    if (id === undefined) return
+    const ok = await confirmar({ titulo: 'Eliminar movimiento', mensaje: 'Se eliminará este movimiento. No se puede deshacer.', aceptar: 'Eliminar', peligro: true })
+    if (!ok) return
+    setEliminando(true)
+    try {
+      const r = await conConfirmacionNegativo(confirmar, (si) => movimientos.eliminar(id, si))
+      if (!r) return
+      setSaldo(r.saldo)
+      avisarCambio()
+      avisar(r.mensaje)
+      navegar(-1)
+    } catch (e) {
+      avisar((e as Error).message, { tono: 'error' })
+    } finally {
+      setEliminando(false)
+    }
+  }
 
   const { categorias, fuentes, cajitas } = catalogos
   const opciones = categoriasPara(categorias, f.tipo === 'INGRESO' ? ['INGRESO'] : ['GASTO', 'COSTO_OPERATIVO'], editando ? inicial.id_categoria : null)
@@ -99,7 +142,15 @@ function Formulario({ id, inicial, catalogos, volver }: { id?: number; inicial: 
           )}
           <div className="grid grid-cols-2 gap-3">
             <Campo etiqueta="Monto" error={errores.monto}>
-              <EntradaMonto value={f.monto} onChange={(e) => pon({ monto: e.target.value })} aria-invalid={!!errores.monto || undefined} required />
+              {/* Al registrar, el teclado numérico se abre de una vez: el monto es lo primero que se escribe. */}
+              <EntradaMonto
+                value={f.monto}
+                onChange={(e) => pon({ monto: e.target.value })}
+                aria-invalid={!!errores.monto || undefined}
+                autoFocus={!editando}
+                enterKeyHint="next"
+                required
+              />
             </Campo>
             <Campo etiqueta="Fecha" error={errores.fecha}>
               <Entrada type="date" value={f.fecha} max={hoy()} onChange={(e) => pon({ fecha: e.target.value })} aria-invalid={!!errores.fecha || undefined} required />
@@ -138,14 +189,19 @@ function Formulario({ id, inicial, catalogos, volver }: { id?: number; inicial: 
             </div>
           )}
           <Campo etiqueta="Descripción (opcional)" error={errores.descripcion}>
-            <Entrada value={f.descripcion ?? ''} maxLength={200} onChange={(e) => pon({ descripcion: e.target.value })} />
+            <Entrada value={f.descripcion ?? ''} maxLength={200} enterKeyHint="done" onChange={(e) => pon({ descripcion: e.target.value })} />
           </Campo>
           <AlertaError mensaje={error} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {editando && eliminable && (
+              <Boton variante="peligro" className="mr-auto" cargando={eliminando} disabled={enviando} onClick={eliminar}>
+                <Icono nombre="basura" className="size-4" /> Eliminar
+              </Boton>
+            )}
             <Boton variante="secundario" onClick={() => navegar(-1)}>
               Cancelar
             </Boton>
-            <Boton type="submit" cargando={enviando}>
+            <Boton type="submit" cargando={enviando} disabled={eliminando}>
               Guardar
             </Boton>
           </div>
