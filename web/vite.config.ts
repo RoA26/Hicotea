@@ -42,8 +42,9 @@ export default defineConfig({
   ],
   server: {
     // En desarrollo /api va por proxy a uvicorn: así la cookie es del mismo origen.
+    // HICOTEA_API_URL permite apuntar a otra instancia (p. ej. una de pruebas en otro puerto).
     proxy: {
-      '/api': 'http://localhost:8000',
+      '/api': process.env.HICOTEA_API_URL ?? 'http://localhost:8000',
     },
   },
 })
