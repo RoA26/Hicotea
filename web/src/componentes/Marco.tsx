@@ -3,10 +3,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigationType } from 'react-rou
 import { TransicionPagina } from '../animacion/TransicionPagina'
 import { FUNCIONES } from '../lib/funciones'
 import { useTema } from '../tema/tema'
-import { AjustesApariencia } from './AjustesApariencia'
 import { useSesion } from './Globales'
 import { HojaRegistrar } from './HojaRegistrar'
-import { Modal } from './Modal'
 import { Icono, type NombreIcono } from './Iconos'
 import { Wordmark } from './Marca'
 import { cx } from './ui'
@@ -37,7 +35,6 @@ function Navegacion({ alElegir }: { alElegir?: () => void }) {
   const { usuario, salir } = useSesion()
   const { tema, alternar } = useTema()
   const { pathname } = useLocation()
-  const [ajustes, setAjustes] = useState(false)
   return (
     <div className="flex h-full flex-col">
       <Link to="/inicio" onClick={alElegir} className="px-4 py-4" aria-label="Hicotea, ir a Inicio">
@@ -71,13 +68,16 @@ function Navegacion({ alElegir }: { alElegir?: () => void }) {
           <Icono nombre={tema === 'oscuro' ? 'sol' : 'luna'} />
           {tema === 'oscuro' ? 'Tema claro' : 'Tema oscuro'}
         </button>
-        <button type="button" onClick={() => setAjustes(true)} className={claseOpcion}>
-          <Icono nombre="categorias" />
-          Estilo y apariencia
-        </button>
-        <Modal abierto={ajustes} onCerrar={() => setAjustes(false)} titulo="Estilo y apariencia">
-          {ajustes && <AjustesApariencia />}
-        </Modal>
+        {/* Perfil reúne cuenta, correo, seguridad y apariencia (antes un modal de "Estilo y apariencia"). */}
+        <NavLink
+          to="/perfil"
+          onClick={alElegir}
+          aria-current={pathname === '/perfil' ? 'page' : undefined}
+          className={cx(claseOpcion, pathname === '/perfil' && 'bg-acento/10 font-semibold text-acento')}
+        >
+          <Icono nombre="usuario" />
+          Perfil y apariencia
+        </NavLink>
         <button type="button" onClick={salir} className={claseOpcion}>
           <Icono nombre="salir" />
           <span className="min-w-0 flex-1 truncate text-left">

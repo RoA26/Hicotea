@@ -1,4 +1,4 @@
-import { ESTILOS, PALETAS, usePreferencias, type Apariencia, type Movimiento } from '../tema/preferencias'
+import { ESTILOS, PALETAS, usePreferencias, type Apariencia, type Estilo, type Movimiento } from '../tema/preferencias'
 import { cx, Segmentos } from './ui'
 
 /**
@@ -32,8 +32,11 @@ export function AjustesApariencia() {
                 disabled={!e.disponible}
                 onChange={() => cambiar({ estilo: e.id })}
               />
-              <span>
-                <span className="block font-semibold">{e.nombre}</span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="font-semibold">{e.nombre}</span>
+                  <Muestra estilo={e.id} claro={claro} />
+                </span>
                 <span className="text-xs text-texto-suave">{e.descripcion}</span>
               </span>
             </label>
@@ -94,5 +97,24 @@ export function AjustesApariencia() {
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * Vista previa mínima de un estilo con los colores de su paleta por defecto
+ * (en claro: fondo y acento; en oscuro: los dos acentos). Los estilos sin paleta todavía (IMPACT,
+ * REBEL) muestran una franja neutra: no se inventan sus colores.
+ */
+function Muestra({ estilo, claro }: { estilo: Estilo; claro: boolean }) {
+  const paleta = PALETAS[estilo][0]
+  if (!paleta) return <span aria-hidden className="h-4 w-12 rounded-insignia border border-dashed border-borde" />
+  const [fondoClaro, acentoClaro, acentoOscuro] = paleta.muestra
+  const colores = claro ? [fondoClaro, acentoClaro] : [acentoOscuro, acentoClaro]
+  return (
+    <span aria-hidden className="flex h-4 w-12 shrink-0 overflow-hidden rounded-insignia border border-borde">
+      {colores.map((c) => (
+        <span key={c} className="flex-1" style={{ background: c }} />
+      ))}
+    </span>
   )
 }

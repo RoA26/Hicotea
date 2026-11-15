@@ -298,7 +298,7 @@ function Usuarios() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold">@{c.nombre_usuario}</p>
                       <p className="truncate text-sm text-texto-suave">{c.nombre_completo}</p>
-                      {c.correo && <p className="truncate text-xs text-texto-suave">{c.correo}</p>}
+                      {c.correo && <p className="truncate text-xs text-texto-suave">{c.correo}{!c.correo_verificado && ' (sin verificar)'}</p>}
                     </div>
                     <EstadoCuenta c={c} />
                   </div>
@@ -341,7 +341,7 @@ function Usuarios() {
                       <p className="truncate font-medium">@{c.nombre_usuario}</p>
                       <p className="truncate text-xs text-texto-suave">
                         {c.nombre_completo}
-                        {c.correo && ` · ${c.correo}`}
+                        {c.correo && ` · ${c.correo}${c.correo_verificado ? '' : ' (sin verificar)'}`}
                       </p>
                     </td>
                     <td className="px-4 py-3"><EstadoCuenta c={c} /></td>

@@ -23,10 +23,12 @@ import Presupuestos from './paginas/Presupuestos'
 import Producido from './paginas/Producido'
 import Recuperar from './paginas/Recuperar'
 import RecurrenteForm from './paginas/RecurrenteForm'
+import Perfil from './paginas/Perfil'
 import Recurrentes from './paginas/Recurrentes'
 import Registro from './paginas/Registro'
 import Reparto from './paginas/Reparto'
 import Restablecer from './paginas/Restablecer'
+import VerificarCorreo from './paginas/VerificarCorreo'
 import { aplicarPreferenciasGuardadas } from './tema/tema'
 
 aplicarPreferenciasGuardadas()
@@ -85,6 +87,8 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/registro" element={<Publica><Registro /></Publica>} />
                 <Route path="/recuperar" element={<Publica><Recuperar /></Publica>} />
                 <Route path="/restablecer" element={<Publica><Restablecer /></Publica>} />
+                {/* Con o sin sesión: el enlace del correo puede abrirse en otro dispositivo. */}
+                <Route path="/verificar-correo" element={<VerificarCorreo />} />
                 <Route path="/admin/*" element={<PrivadaAdmin />} />
                 <Route element={<Privada />}>
                   <Route path="/inicio" element={<Inicio />} />
@@ -106,6 +110,7 @@ createRoot(document.getElementById('root')!).render(
                   <Route path="/recurrentes/nuevo" element={<RecurrenteForm />} />
                   <Route path="/recurrentes/:id" element={<RecurrenteForm />} />
                   <Route path="/atajos" element={<Atajos />} />
+                  <Route path="/perfil" element={<Perfil />} />
                   <Route path="/categorias" element={<Navigate to="/atajos" replace />} />
                   <Route path="/compartir" element={<Compartir />} />
                   <Route path="/compartido/:titular" element={<Compartido />} />

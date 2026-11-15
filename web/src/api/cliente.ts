@@ -261,6 +261,19 @@ export const compartir = {
   calendario: (titular: number, mes?: string) => get<T.MesCalendario>(`/compartido/${titular}/calendario`, { mes }),
 }
 
+/** Perfil propio. Cambiar correo o contraseña pide la contraseña actual. */
+export const cuenta = {
+  ver: () => get<T.Perfil>('/cuenta'),
+  actualizar: (f: { nombre_completo: string }) => patch<T.Perfil>('/cuenta', f),
+  /** Envía un enlace de verificación a `correo`; queda pendiente hasta abrirlo. */
+  pedirCorreo: (f: { correo: string; contrasena_actual: string }) => post<T.Mensaje>('/cuenta/correo', f),
+  cancelarCorreo: () => del<void>('/cuenta/correo/pendiente'),
+  verificarCorreo: (token: string) => post<{ mensaje: string; correo: string }>('/cuenta/correo/verificar', { token }),
+  cambiarContrasena: (f: { contrasena_actual: string; contrasena: string; confirmacion_contrasena: string }) =>
+    post<{ mensaje: string; cerradas: number }>('/cuenta/contrasena', f),
+  cerrarOtrasSesiones: () => post<{ mensaje: string; cerradas: number }>('/cuenta/sesiones/cerrar-otras'),
+}
+
 /** Panel de administración. La API valida el rol en cada petición (403 si no es administrador). */
 export const admin = {
   resumen: () => get<T.ResumenAdmin>('/admin/resumen'),

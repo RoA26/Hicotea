@@ -18,8 +18,20 @@ export type Usuario = {
   nombre_usuario: string
   nombre_completo: string
   correo: string | null
+  /** El correo recibe el PIN de recuperación solo si está verificado. */
+  correo_verificado: boolean
   rol: Rol
   fecha_registro: string
+}
+
+/** Perfil propio (/api/cuenta). */
+export type Perfil = Usuario & {
+  /** Dirección esperando verificación (nueva, o la actual sin verificar). No es la que está en uso. */
+  correo_pendiente: string | null
+  correo_pendiente_expira_en: string | null
+  /** False si el servidor no puede enviar correos: no se puede verificar nada. */
+  correo_disponible: boolean
+  sesiones_activas: number
 }
 
 export type Mensaje = { mensaje: string }
@@ -301,6 +313,7 @@ export type CuentaAdmin = {
   nombre_usuario: string
   nombre_completo: string
   correo: string | null
+  correo_verificado: boolean
   rol: Rol
   activo: boolean
   bloqueado_en: string | null

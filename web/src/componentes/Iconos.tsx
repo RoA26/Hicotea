@@ -27,6 +27,7 @@ const TRAZOS = {
   puntos: 'M5 12h.01M12 12h.01M19 12h.01',
   filtro: 'M4 5h16l-6 8v5l-4 2v-7z',
   copiar: 'M9 9h10v10H9zM5 15V5h10',
+  usuario: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21v-1a8 8 0 0116 0v1',
   usuarios: 'M9 11a4 4 0 100-8 4 4 0 000 8zM2 21v-1a6 6 0 0112 0v1M16 3.5a4 4 0 010 7.5M22 21v-1a6 6 0 00-4-5.6',
   sobre: 'M3 6h18v12H3zM3 7l9 6 9-6',
   historial: 'M3 12a9 9 0 103-6.7L3 8M3 3v5h5M12 7v5l3 2',
