@@ -23,11 +23,12 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 | **Caparazón** | Unificación (navegación, tortuga, detalle, cajita + meta, logros, historial, archivo) | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `docs/decisiones-design-system.md §4` |
 | **Design System + Natura** | Cuatro ejes, tokens de forma, tipo, movimiento y series, Natura (8 combinaciones AA) | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§1–3` |
 | **Calendario vivo** | C-01…C-07 completos, distribución 70/30 | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§5–6` |
-| **Móvil + Admin** | Barra inferior, tablero con divulgación progresiva, invitaciones, panel `/admin`, bloqueo, auditoría, recuperación por correo | 🚀 **Implementado, pendiente de commit y validación** | Claude Code | `docs/administracion-y-recuperacion.md`, migración 0010 |
+| **Móvil + Admin** | Barra inferior, tablero con divulgación progresiva, invitaciones, panel `/admin`, bloqueo, auditoría, recuperación por correo | ✅ Commit (`181396c`…`cab78cb`); admin validado a mano, falta celular real | Claude Code | `docs/administracion-y-recuperacion.md`, migración 0010 |
+| **Perfil + Correo + Recurrentes** | `/perfil`, verificación de correo (0011), `RECURRENTE_AVANZO`, barra oculta con teclado | 🚀 **Implementado, pendiente de commit y validación** | Claude Code | `docs/perfil-y-verificacion-correo.md`, migración 0011 |
 
 ---
 
-## 🧭 Estado consolidado (2026-11-14)
+## 🧭 Estado consolidado (2026-11-14, sesión de perfil)
 
 ### 1. Implementado y consolidado (con commit)
 - Fases 0–4, A y B (ver tabla).
@@ -35,41 +36,51 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 - **Integridad** D-F1…D-F4 y serialización por usuario (`3e8ba00`).
 - **Caparazón**, **sistema de diseño + Natura**, **Calendario vivo** C-01…C-07, migraciones 0007–0009 (`37cb47d`).
 - Infraestructura de producción y endurecimiento de la PWA (`705a34e`, `5387adb`, `1d8f958`, `f3b278f`).
+- **Móvil + administración + invitaciones + recuperación por correo**, migración 0010 (`181396c`, `2ed121f`, `42b4709`, `ee50451`, `cab78cb`). El panel admin ya se probó a mano. Nota: `42b4709` no compila por sí solo (usa `usuario.rol`, que llega en `ee50451`); el estado final sí.
 
 ### 2. Implementado, pendiente de commit
-Móvil, sistema de diseño táctil, administración, invitaciones y recuperación por correo (detalle abajo). Plan de 5 commits:
-`feat(api)` backend + 0010 → `feat(web)` primitivas táctiles → `feat(web)` panel admin y registro por invitación → `feat(web)` navegación móvil → `docs`.
-Comprobado el 2026-11-14: 141 pruebas en verde, 0010 sube y baja limpia, `tsc` en cada paso web, lint sin errores, build correcto y `git diff --check` limpio.
+- **Integridad de recurrentes**: `ocurrencia` obligatoria al confirmar u omitir; 409 `RECURRENTE_AVANZO` y avance condicional. Ya no hay movimientos duplicados por doble toque, reintento u otra pestaña.
+- **Perfil** `/perfil`: cuenta (nombre editable), correo, seguridad (cambiar contraseña, cerrar las demás sesiones) y apariencia con muestras de color.
+- **Verificación de correo** (migración **0011**): enlace de un solo uso (SHA-256, 24 h), reautenticación, sin enumeración, PIN solo a correo verificado.
+- **UX**: la barra inferior se oculta con el teclado virtual; el selector de estilo muestra colores; las acciones del correo pendiente van debajo de la dirección.
+- Proxy de Vite configurable con `HICOTEA_API_URL` (para instancias de prueba).
+- Comprobado: 170 pruebas (29 nuevas), 0011 sube y baja limpia, `tsc`, lint (0 errores, 12 avisos como antes), build, `git diff --check` y un recorrido E2E con Chromium en emulación (18/18). Detalle: `docs/perfil-y-verificacion-correo.md`.
 
 ### 3. Pendiente de validación manual (propietario)
-- [ ] Celular real (Safari iOS y Chrome Android): barra inferior **con el teclado abierto** (no tiene manejo de teclado), hoja "Registrar", formularios de movimiento y calendario.
-- [ ] Panel `/admin`: bloquear, desbloquear, cerrar sesiones, invitaciones (con y sin correo, reuso, revocación, vencimiento) y auditoría.
-- [ ] Registro por invitación desde el celular y recuperación con `HICOTEA_CORREO_MODO=consola`.
+- [ ] **Celular real** (Safari iOS y Chrome Android): la barra se oculta con el teclado, hoja "Registrar", formularios, perfil. Solo se probó en emulación.
+- [ ] Perfil: agregar, cambiar y verificar correo con `HICOTEA_CORREO_MODO=consola`; cambiar contraseña; cerrar otras sesiones.
+- [ ] Recurrentes: confirmar en dos pestañas a la vez y ver el aviso en la segunda.
 - [ ] Revisión visual heredada: Caparazón en claro y oscuro, Natura en las 8 combinaciones, calendario en escritorio y móvil.
 - [ ] Decidir `--aviso` en Original claro (3,19:1, heredado del kit).
 
 ### 4. Pendiente de configuración externa
-- [ ] Credenciales SMTP reales (proveedor, remitente y dominio). Hasta entonces el PIN queda en el log en producción.
-- [ ] Al desplegar: `alembic upgrade head` (0009 → 0010) en producción y `app.cli admin otorgar <usuario>` dentro del contenedor.
-- [ ] Decidir cuándo vaciar `HICOTEA_CODIGO_INVITACION` en `.env.prod` (registro solo por invitaciones individuales).
+- [ ] **SMTP real** (proveedor, remitente, dominio con SPF/DKIM). Sin él, en producción no se pueden verificar correos y el PIN sigue en el log.
+- [ ] Al desplegar: `alembic upgrade head` (0009 → 0011) en producción y `app.cli admin otorgar <usuario>` dentro del contenedor.
+- [ ] Decidir cuándo vaciar `HICOTEA_CODIGO_INVITACION` en `.env.prod`.
 
 ### 5. Funcionalidades futuras
-Siguiente etapa, en este orden:
-1. **Perfil de usuario**: añadir, cambiar y verificar el correo electrónico (las cuentas existentes no tienen correo).
-2. **Recurrentes**: rechazar una confirmación si `proxima_fecha` ya avanzó (doble confirmación).
-3. **Refinamientos de UX/UI** que salgan de las pruebas en el celular.
+1. **Refinamientos de UX/UI** que salgan de las pruebas en el celular real.
+2. Identidades **IMPACT** y **REBEL**.
+3. **Presupuestos** con historial (D-P1) y **Compromisos**.
+4. **Reportes** y después **Hicotea Wrapped**.
+5. Fases C, D y E de la tabla.
 
-Backlog sin fecha:
-- Identidades **IMPACT** y **REBEL** (estructura lista; faltan hojas, paletas y auditoría).
-- **Presupuestos** (historial, modalidad financiada) y **Compromisos**.
-- **Reportes** y **Hicotea Wrapped** (ver `decisiones-caparazon-calendario.md §5`).
-- Fases C, D y E de la tabla.
+#### Preparación (fase 5 de la sesión de perfil: análisis, sin implementar)
+| Módulo | Depende de | Ya listo | Limitaciones a resolver |
+|---|---|---|---|
+| IMPACT / REBEL | Sistema de diseño | `Estilo` ya incluye `impact` y `rebel`; `index.html` aplica `data-estilo` antes de pintar; el selector del perfil los muestra deshabilitados y toma sus colores de `PALETAS` en cuanto existan | Faltan `tema/estilos/impact.css` y `rebel.css`, paletas en `PALETAS`, `disponible: true`, auditoría con `scripts/contraste.mjs` y presets de movimiento (D-M4). Las preferencias son por dispositivo: si Wrapped debe abrir siempre en IMPACT, que lo fije la vista, no la preferencia |
+| Presupuestos | — | Tabla `presupuesto`, `EstadoPresupuesto` | D-P1: sin historial de montos, Reportes mentiría sobre meses pasados. Va **antes** de Reportes |
+| Compromisos | Recurrentes | El contrato `ocurrencia` + `RECURRENTE_AVANZO` es la base idempotente para cuotas y obligaciones; el calendario ya expone `compromisos` | Cuotas con número de pago, quincena opcional y disponible proyectado sin descontar dos veces lo financiado |
+| Reportes | Presupuestos (D-P1) | Totales por categoría, día y mes en el tablero; fuentes inactivas en el histórico (D-F4) | Un servicio único `GET /api/reportes/mes` (D-R4); decidir D-R3 (calcular siempre + huella) |
+| Wrapped | Reportes + IMPACT | Contrato en `decisiones-foundations.md §8` | No calcula nada propio; avisa si la huella cambió |
+
+Orden recomendado: UX móvil → Presupuestos (D-P1) → Reportes → IMPACT → Wrapped → Compromisos → REBEL. Compromisos puede adelantarse si urge: no depende de Reportes.
 
 ---
 
 ## 📱 Experiencia móvil y administración de plataforma (2026-11-14)
 
-### Hecho (pendiente de commit)
+### Hecho (commits `181396c`…`cab78cb`)
 - [x] **Responsive**: el calendario desbordaba de 362 a 472 px en móvil y 32 px en 768 (rejilla sin columnas explícitas); Movimientos desbordaba 5 px a 320. Ahora hay 0 desbordes en 17 rutas × 7 anchos (320–1440), medido con Playwright.
 - [x] **Barra inferior móvil** (Inicio, Movimientos, **Registrar**, Calendario, Más) con áreas seguras; "Registrar" abre una hoja con gasto, ingreso, producido y atajos. El cajón pasa a "Más". Decisión: reemplaza "sin barra inferior" de Eden.
 - [x] **Tablero**: saldo → ingresos y gastos del mes → registrar → avisos → últimos 5 movimientos → ahorro compacto → "Análisis del mes" plegable (abierto en escritorio, cerrado en móvil, recuerda la elección; las gráficas no se montan cerradas). No se quitó información.

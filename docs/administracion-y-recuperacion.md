@@ -99,10 +99,10 @@ respuestas del panel no contienen montos, "saldo", "token" ni "pin".
 Se conserva el flujo de PIN de 6 dígitos (ya cumplía hash argon2, 15 minutos, 5 intentos, un solo
 uso y cierre de sesiones) y se completa:
 
-- **Entrega por correo**: si la cuenta tiene correo y hay transporte, el PIN va por correo y **no**
+- **Entrega por correo** (desde 0011, solo a un correo **verificado**): si la cuenta tiene correo verificado y hay transporte, el PIN va por correo y **no**
   se escribe en el log. Sin correo, o si el envío falla, queda en el log como antes, para que quien
   administra lo entregue tras verificar la identidad por un canal acordado.
-- **Usuario o correo** en "Olvidé mi contraseña".
+- **Usuario o correo verificado** en "Olvidé mi contraseña" (un correo sin verificar no identifica la cuenta).
 - **Sin enumeración**: la misma respuesta exista o no la cuenta y tenga o no correo. Restablecer
   contra una cuenta inexistente cuesta lo mismo (argon2 de relleno) y da el mismo error que un PIN
   vencido. La validación de la contraseña nueva usa lo que escribió la persona, no la cuenta encontrada.
@@ -140,8 +140,8 @@ HICOTEA_SMTP_SEGURIDAD=starttls    # starttls | ssl | ninguna
 Un fallo del servidor de correo no rompe la solicitud: se registra el tipo de error (sin el contenido)
 y el PIN queda en el log para quien administra. Las pruebas usan `correo.BuzonMemoria`.
 
-Los usuarios existentes no tienen correo. Hoy solo se registra al crear la cuenta. Pendiente:
-pantalla de perfil para añadirlo o cambiarlo con verificación.
+Los usuarios existentes no tienen correo. Desde 0011 lo agregan, cambian y verifican en `/perfil`
+(ver `docs/perfil-y-verificacion-correo.md`).
 
 ## 6. Variables nuevas
 
@@ -156,6 +156,6 @@ pantalla de perfil para añadirlo o cambiarlo con verificación.
 
 - Los limitadores viven en memoria (un worker): se reinician al reiniciar la API. Es suficiente para una sola instancia.
 - Si el envío por SMTP tarda, la petición de recuperación espera hasta 15 s (envío síncrono).
-- El correo de la cuenta no se verifica al registrarse; quien lo escriba mal no recibirá el PIN.
+- Resuelto en 0011: el correo del registro queda sin verificar hasta abrir el enlace, y solo uno verificado recibe el PIN.
 - No hay gestión de roles desde el panel (a propósito): dar o quitar el rol solo se hace por CLI.
 - No hay "sesiones por dispositivo"; cerrar sesiones las cierra todas.

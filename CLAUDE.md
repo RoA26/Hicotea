@@ -51,25 +51,26 @@ hicotea/
 
 Integridad (2026-11-12): toda operación de dinero llama a `servicios/serializacion.serializar_finanzas` antes de leer saldos; no se recrea saldo en cajitas inactivas; correcciones con disponible negativo = 409 `DISPONIBLE_NEGATIVO` + `confirmar_negativo=true`. Ver `docs/decisiones-caparazon-calendario.md`.
 
-Tablas: `usuario` (con `rol`, `correo`, `bloqueado_en`, `ultimo_ingreso_en` desde 0010), `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recurrente`, `presupuesto`, `meta`, `acceso_compartido`, `recuperacion_contrasena`, `atajo`, `sesion`, `dia_sin_actividad`, `invitacion`, `auditoria_admin`. **Se conservan las restricciones CHECK** de `movimiento` (`ck_movimiento_tipo`, `ck_movimiento_coherencia`).
+Tablas: `usuario` (con `rol`, `correo`, `bloqueado_en`, `ultimo_ingreso_en` desde 0010), `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recurrente`, `presupuesto`, `meta`, `acceso_compartido`, `recuperacion_contrasena`, `atajo`, `sesion`, `dia_sin_actividad`, `invitacion`, `auditoria_admin`, `verificacion_correo` (0011; `usuario.correo_verificado_en`). **Se conservan las restricciones CHECK** de `movimiento` (`ck_movimiento_tipo`, `ck_movimiento_coherencia`).
 
 | Módulo | Pantallas | Lógica clave a preservar |
 |---|---|---|
-| Auth | login, registro (por invitación `?invitacion=`), recuperar, restablecer | PIN de recuperación con expiración, por correo si hay (`app/correo.py`), límites por IP |
+| Auth | login, registro (por invitación `?invitacion=`), recuperar, restablecer | PIN de recuperación con expiración, solo a un correo **verificado** (`app/correo.py`), límites por IP |
+| **Perfil** (`/perfil`, `/verificar-correo`) | cuenta, correo, seguridad, apariencia | `/api/cuenta/*`; correo y contraseña piden la contraseña actual; enlace de verificación de un solo uso (SHA-256, 24 h). Ver `docs/perfil-y-verificacion-correo.md` |
 | **Administración** (`/admin`, marco propio, carga diferida) | resumen, usuarios, invitaciones, auditoría | `AdminActual` en `/api/admin/*` (403 si no es ADMIN); bloqueo real; nunca datos financieros. Primer admin: `python -m app.cli admin otorgar`. Ver `docs/administracion-y-recuperacion.md` |
 | Tablero (inicio) | resumen, gráficas, botones rápidos | `Tablero`, `ResumenSaldo`, `ResumenPeriodo`, totales por categoría/día/mes |
 | Movimientos | lista (filtros, paginación), formulario, **producido del día** | coherencia tipo↔categoría↔cajita, `id_relacionado` (transferencias) |
 | Fuentes de ingreso | lista | `ResumenFuente` (ingreso − costos) |
 | **Caparazón** (`/caparazon`; reúne Cajitas y Metas, que ya no tienen entrada propia) | tortuga + lista, detalle `/cajitas/:id`, **reparto** `/cajitas/reparto`, historial, archivo | `CalculadoraReparto`, `PropuestaReparto`, `ProgresoMeta`; una meta activa por cajita; logro explícito (`POST /metas/{id}/logro`) |
 | Presupuestos | lista | `EstadoPresupuesto` |
-| Recurrentes | lista, formulario, confirmación | `Frecuencia`, `Periodicidad` |
+| Recurrentes | lista, formulario, confirmación | `Frecuencia`, `Periodicidad`; confirmar/omitir llevan `ocurrencia` (409 `RECURRENTE_AVANZO` si ya avanzó) |
 | Categorías | lista | `TipoCategoria` |
 | Compartir | lista (fuera del menú desde Foundations; `VITE_COMPARTIR=1` lo muestra) | `acceso_compartido` (datos y permisos intactos) |
 | Calendario (vivo) | mes con estados, detalle del día, registro retrospectivo | `MesCalendario`, `DiaCalendario` (ahorro aparte, `sin_registros`, `compromisos`) |
 | Atajos | botones rápidos | `POST /api/atajos/{id}/usar` + "Deshacer" |
 | Landing | `/` pública | quien tiene sesión va a `/inicio` |
 
-Se mantiene de Eden: móvil primero, menú lateral fijo desde `lg`, modal de confirmación global, tema claro/oscuro guardado, PWA con modo offline. **Cambio 2026-11-14**: en móvil hay **barra inferior** (Inicio, Movimientos, Registrar al centro, Calendario, Más), y "Más" abre el cajón con el menú completo (`componentes/Marco.tsx`, `HojaRegistrar.tsx`).
+Se mantiene de Eden: móvil primero, menú lateral fijo desde `lg`, modal de confirmación global, tema claro/oscuro guardado, PWA con modo offline. **Cambio 2026-11-14**: en móvil hay **barra inferior** (Inicio, Movimientos, Registrar al centro, Calendario, Más), y "Más" abre el cajón con el menú completo (`componentes/Marco.tsx`, `HojaRegistrar.tsx`). La barra se oculta mientras un campo de texto tiene el foco (teclado virtual).
 
 ## Sistema de diseño
 
