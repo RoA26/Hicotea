@@ -13,22 +13,78 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 | **Fase 2** | Backend completo portado desde Eden | ✅ Completado | Claude Code | SQLAlchemy Core, migraciones Alembic, repos y servicios |
 | **Fase 3** | Pantallas base funcionales | ✅ Completado | Claude Code | Rutas y componentes base |
 | **Fase 4** | Microinteracciones y animaciones | ✅ Completado | Antigravity (`fa9466a`) | Canvas de partículas, contador animado, transiciones |
-| **Fase A** | Evolución de Botones rápidos a Atajos | 🚀 **Implementado (Pendiente commit)** | Antigravity | Pestañas Atajos/Categorías, creación contextual, redirect |
-| **Fase B** | Cajitas de ahorro y lógica de reparto | 🚀 **Implementado (Pendiente commit)** | Antigravity | Presets 5%, visualizador caparazón, rediseño detalle |
+| **Fase A** | Evolución de Botones rápidos a Atajos | ✅ Completado (`970d65d`) | Antigravity | Pestañas Atajos/Categorías, creación contextual, redirect |
+| **Fase B** | Cajitas de ahorro y lógica de reparto | ✅ Completado (`afd1722`, `1843e80`) | Antigravity | Presets 5%, visualizador caparazón, rediseño detalle |
 | **Fase C** | Dashboard / Tablero (layout bento y métricas) | 📋 Planificado | Por definir | Análisis completado |
 | **Fase D** | Landing page y flujos de autenticación | 📋 Planificado | Por definir | Análisis completado |
 | **Fase E** | Benchmarking exhaustivo con Eden | 📋 Planificado | Por definir | Comparativa inicial documentada |
-| **Foundations** | Auditoría financiera, decisiones, fundamentos de diseño, Motion | 🚀 **Implementado (Pendiente revisión y commit)** | Claude Code | `docs/auditoria-foundations.md`, `docs/decisiones-foundations.md` |
-| **Integridad** | D-F1…D-F4: cajitas inactivas, disponible negativo, concurrencia, reportes históricos | 🚀 **Implementado (Pendiente revisión y commit)** | Claude Code | `docs/decisiones-caparazon-calendario.md §1` |
-| **Caparazón** | Unificación (navegación, tortuga, detalle, cajita + meta, logros, historial, archivo) | 🚀 **Implementado (Pendiente revisión visual y commit)** | Claude Code | `docs/decisiones-design-system.md §4` |
-| **Design System + Natura** | Cuatro ejes, tokens de forma, tipo, movimiento y series, Natura (8 combinaciones AA) | 🚀 **Implementado (Pendiente revisión visual)** | Claude Code | `§1–3` |
-| **Calendario vivo** | C-01…C-07 completos, distribución 70/30 | 🚀 **Implementado (Pendiente revisión visual)** | Claude Code | `§5–6` |
+| **Foundations** | Auditoría financiera, decisiones, fundamentos de diseño, Motion | ✅ Commit (`7b85b2d`, `5d1059f`, `64084ad`, `fa70e4a`) | Claude Code | `docs/auditoria-foundations.md`, `docs/decisiones-foundations.md` |
+| **Integridad** | D-F1…D-F4: cajitas inactivas, disponible negativo, concurrencia, reportes históricos | ✅ Commit (`3e8ba00`) | Claude Code | `docs/decisiones-caparazon-calendario.md §1` |
+| **Caparazón** | Unificación (navegación, tortuga, detalle, cajita + meta, logros, historial, archivo) | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `docs/decisiones-design-system.md §4` |
+| **Design System + Natura** | Cuatro ejes, tokens de forma, tipo, movimiento y series, Natura (8 combinaciones AA) | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§1–3` |
+| **Calendario vivo** | C-01…C-07 completos, distribución 70/30 | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§5–6` |
+| **Móvil + Admin** | Barra inferior, tablero con divulgación progresiva, invitaciones, panel `/admin`, bloqueo, auditoría, recuperación por correo | 🚀 **Implementado, pendiente de commit y validación** | Claude Code | `docs/administracion-y-recuperacion.md`, migración 0010 |
+
+---
+
+## 🧭 Estado consolidado (2026-11-14)
+
+### 1. Implementado y consolidado (con commit)
+- Fases 0–4, A y B (ver tabla).
+- **Foundations**: F-01…F-04, Compartir oculto, Repartir mejorado, Motion (`7b85b2d`, `5d1059f`, `64084ad`, `fa70e4a`, `1843e80`).
+- **Integridad** D-F1…D-F4 y serialización por usuario (`3e8ba00`).
+- **Caparazón**, **sistema de diseño + Natura**, **Calendario vivo** C-01…C-07, migraciones 0007–0009 (`37cb47d`).
+- Infraestructura de producción y endurecimiento de la PWA (`705a34e`, `5387adb`, `1d8f958`, `f3b278f`).
+
+### 2. Implementado, pendiente de commit
+Móvil, sistema de diseño táctil, administración, invitaciones y recuperación por correo (detalle abajo). Plan de 5 commits:
+`feat(api)` backend + 0010 → `feat(web)` primitivas táctiles → `feat(web)` panel admin y registro por invitación → `feat(web)` navegación móvil → `docs`.
+Comprobado el 2026-11-14: 141 pruebas en verde, 0010 sube y baja limpia, `tsc` en cada paso web, lint sin errores, build correcto y `git diff --check` limpio.
+
+### 3. Pendiente de validación manual (propietario)
+- [ ] Celular real (Safari iOS y Chrome Android): barra inferior **con el teclado abierto** (no tiene manejo de teclado), hoja "Registrar", formularios de movimiento y calendario.
+- [ ] Panel `/admin`: bloquear, desbloquear, cerrar sesiones, invitaciones (con y sin correo, reuso, revocación, vencimiento) y auditoría.
+- [ ] Registro por invitación desde el celular y recuperación con `HICOTEA_CORREO_MODO=consola`.
+- [ ] Revisión visual heredada: Caparazón en claro y oscuro, Natura en las 8 combinaciones, calendario en escritorio y móvil.
+- [ ] Decidir `--aviso` en Original claro (3,19:1, heredado del kit).
+
+### 4. Pendiente de configuración externa
+- [ ] Credenciales SMTP reales (proveedor, remitente y dominio). Hasta entonces el PIN queda en el log en producción.
+- [ ] Al desplegar: `alembic upgrade head` (0009 → 0010) en producción y `app.cli admin otorgar <usuario>` dentro del contenedor.
+- [ ] Decidir cuándo vaciar `HICOTEA_CODIGO_INVITACION` en `.env.prod` (registro solo por invitaciones individuales).
+
+### 5. Funcionalidades futuras
+Siguiente etapa, en este orden:
+1. **Perfil de usuario**: añadir, cambiar y verificar el correo electrónico (las cuentas existentes no tienen correo).
+2. **Recurrentes**: rechazar una confirmación si `proxima_fecha` ya avanzó (doble confirmación).
+3. **Refinamientos de UX/UI** que salgan de las pruebas en el celular.
+
+Backlog sin fecha:
+- Identidades **IMPACT** y **REBEL** (estructura lista; faltan hojas, paletas y auditoría).
+- **Presupuestos** (historial, modalidad financiada) y **Compromisos**.
+- **Reportes** y **Hicotea Wrapped** (ver `decisiones-caparazon-calendario.md §5`).
+- Fases C, D y E de la tabla.
+
+---
+
+## 📱 Experiencia móvil y administración de plataforma (2026-11-14)
+
+### Hecho (pendiente de commit)
+- [x] **Responsive**: el calendario desbordaba de 362 a 472 px en móvil y 32 px en 768 (rejilla sin columnas explícitas); Movimientos desbordaba 5 px a 320. Ahora hay 0 desbordes en 17 rutas × 7 anchos (320–1440), medido con Playwright.
+- [x] **Barra inferior móvil** (Inicio, Movimientos, **Registrar**, Calendario, Más) con áreas seguras; "Registrar" abre una hoja con gasto, ingreso, producido y atajos. El cajón pasa a "Más". Decisión: reemplaza "sin barra inferior" de Eden.
+- [x] **Tablero**: saldo → ingresos y gastos del mes → registrar → avisos → últimos 5 movimientos → ahorro compacto → "Análisis del mes" plegable (abierto en escritorio, cerrado en móvil, recuerda la elección; las gráficas no se montan cerradas). No se quitó información.
+- [x] **Movimientos**: filtros plegados en el celular con resumen del periodo, la fila se toca para editar, "Eliminar" dentro del formulario, foco y teclado decimal en el monto al crear, scroll conservado al volver, categoría "Todas" en el filtro y paginación táctil.
+- [x] **Sistema de diseño**: `rounded-interno`, `shadow-elevada` en lugar de `shadow-xl/2xl`, `BotonIcono` (44 px) y `Divulgable`. `Campo` saca la ayuda y el error del `<label>` (aria-describedby). El modal ya no roba el foco a la pantalla nueva. Objetivos táctiles de 44 px en Caparazón, Reparto y atajos.
+- [x] **Backend**: migración **0010** (rol, correo, bloqueo, último ingreso, `invitacion`, `auditoria_admin`), `/api/admin/*`, CLI `python -m app.cli`, correo intercambiable (`app/correo.py`) y límites por IP en registro y recuperación. **141 pruebas en verde** (24 nuevas).
+- [x] **Panel `/admin`**: resumen, usuarios (tarjetas o tabla), invitaciones (enlace visible una vez) y auditoría.
+
+Limitaciones conocidas: `docs/administracion-y-recuperacion.md §7`. Base de desarrollo ya en 0010.
 
 ---
 
 ## 🐢 Caparazón, Design System y Natura (2026-11-12, sesión 3)
 
-### Hecho (sin commit)
+### Hecho (commit `37cb47d`)
 - [x] **Caparazón** como entrada única: `/caparazon` (tortuga de 7 placas iguales, grupo "+N", lista accesible, proporción real aparte, panel con las tres métricas, Repartir, Nueva cajita, historial y archivo). `/cajitas` y `/metas` redirigen; se conservan `/cajitas/:id` y `/cajitas/reparto`. Se retiraron las páginas `Cajitas.tsx` y `Metas.tsx` (su funcionalidad está en el Caparazón y en el detalle).
 - [x] Detalle de cajita: descripción, tres métricas, meta (añadir, editar, pausar, reactivar), metas históricas, **Celebrar y guardar logro**, "Archivar" y "Reactivar", y `?operacion=` y `?fecha=` precargados.
 - [x] Crear cajita y meta en una sola transacción (`POST /cajitas` con `meta`). Migración **0008**: `cajita.descripcion` y `meta.alcanzada_en`.
@@ -52,7 +108,7 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 
 ## 🛡️ Integridad, Caparazón y Calendario vivo (2026-11-12, sesión 2)
 
-### Hecho (sin commit)
+### Hecho (commits `3e8ba00` y `37cb47d`)
 - [x] **D-F1**: no se puede recrear saldo en cajitas desactivadas, y el total cuenta (y avisa) cualquier saldo histórico en ellas.
 - [x] **D-F2**: las correcciones que dejan el disponible negativo piden confirmación (409 `DISPONIBLE_NEGATIVO`). El tablero explica lo asignado y lo que falta. Aportes y repartos siguen exigiendo fondos.
 - [x] **D-F3**: serialización por usuario (`servicios/serializacion.py`). H-04 se reprodujo antes (6 de 7 pruebas fallaban) y pasa después.
@@ -78,7 +134,7 @@ Backend con 106 pruebas en verde; web con build, typecheck y lint sin errores nu
 
 ## 🧱 Foundations (2026-11-12)
 
-### Hecho en esta sesión (sin commit; lo revisa el propietario)
+### Hecho en esta sesión (en commits del 2026-11-12/13)
 - [x] Auditoría financiera completa del backend y de los cálculos de la web: 74 pruebas en verde y una sonda temporal que reprodujo H-01, H-02 y H-03 (ver `auditoria-foundations.md`).
 - [x] **F-01** corregido: una cajita de 0,5 % se mostraba y se precargaba al editar como 50 % (`lib/formato.ts → porcentajeNumero`).
 - [x] **F-02** corregido: `Boton` no se desactivaba mientras `cargando` (doble envío en todos los formularios) (`componentes/ui.tsx`).

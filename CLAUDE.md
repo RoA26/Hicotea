@@ -51,11 +51,12 @@ hicotea/
 
 Integridad (2026-11-12): toda operación de dinero llama a `servicios/serializacion.serializar_finanzas` antes de leer saldos; no se recrea saldo en cajitas inactivas; correcciones con disponible negativo = 409 `DISPONIBLE_NEGATIVO` + `confirmar_negativo=true`. Ver `docs/decisiones-caparazon-calendario.md`.
 
-Tablas: `usuario`, `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recurrente`, `presupuesto`, `meta`, `acceso_compartido`, `recuperacion_contrasena`, `atajo`. **Se conservan las restricciones CHECK** de `movimiento` (`ck_movimiento_tipo`, `ck_movimiento_coherencia`).
+Tablas: `usuario` (con `rol`, `correo`, `bloqueado_en`, `ultimo_ingreso_en` desde 0010), `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recurrente`, `presupuesto`, `meta`, `acceso_compartido`, `recuperacion_contrasena`, `atajo`, `sesion`, `dia_sin_actividad`, `invitacion`, `auditoria_admin`. **Se conservan las restricciones CHECK** de `movimiento` (`ck_movimiento_tipo`, `ck_movimiento_coherencia`).
 
 | Módulo | Pantallas | Lógica clave a preservar |
 |---|---|---|
-| Auth | login, registro, recuperar, restablecer | tokens de recuperación con expiración |
+| Auth | login, registro (por invitación `?invitacion=`), recuperar, restablecer | PIN de recuperación con expiración, por correo si hay (`app/correo.py`), límites por IP |
+| **Administración** (`/admin`, marco propio, carga diferida) | resumen, usuarios, invitaciones, auditoría | `AdminActual` en `/api/admin/*` (403 si no es ADMIN); bloqueo real; nunca datos financieros. Primer admin: `python -m app.cli admin otorgar`. Ver `docs/administracion-y-recuperacion.md` |
 | Tablero (inicio) | resumen, gráficas, botones rápidos | `Tablero`, `ResumenSaldo`, `ResumenPeriodo`, totales por categoría/día/mes |
 | Movimientos | lista (filtros, paginación), formulario, **producido del día** | coherencia tipo↔categoría↔cajita, `id_relacionado` (transferencias) |
 | Fuentes de ingreso | lista | `ResumenFuente` (ingreso − costos) |
@@ -68,11 +69,11 @@ Tablas: `usuario`, `categoria`, `fuente_ingreso`, `movimiento`, `cajita`, `recur
 | Atajos | botones rápidos | `POST /api/atajos/{id}/usar` + "Deshacer" |
 | Landing | `/` pública | quien tiene sesión va a `/inicio` |
 
-Se mantiene de Eden: móvil primero, sin barra inferior, menú lateral (drawer en móvil, fijo desde `lg`), modal de confirmación global, tema claro/oscuro guardado, PWA con modo offline.
+Se mantiene de Eden: móvil primero, menú lateral fijo desde `lg`, modal de confirmación global, tema claro/oscuro guardado, PWA con modo offline. **Cambio 2026-11-14**: en móvil hay **barra inferior** (Inicio, Movimientos, Registrar al centro, Calendario, Más), y "Más" abre el cajón con el menú completo (`componentes/Marco.tsx`, `HojaRegistrar.tsx`).
 
 ## Sistema de diseño
 
-Cuatro ejes independientes en `web/src/tema/preferencias.ts` (aplicados antes de pintar desde `index.html`): **estilo** (`data-estilo`: Original, Natura; IMPACT y REBEL preparados), **apariencia** (`data-theme`, más "sistema"), **paleta** (`data-paleta`) y **movimiento** (`data-movimiento`; `prefers-reduced-motion` siempre gana). Tokens de forma, tipo, movimiento y series en `tema/tokens.css`; estilos en `tema/estilos/*.css`. Usar `rounded-tarjeta` y `rounded-control`, no `rounded-2xl` ni `rounded-xl`. Contraste: `node web/scripts/contraste.mjs`. Detalle: `docs/decisiones-design-system.md`.
+Cuatro ejes independientes en `web/src/tema/preferencias.ts` (aplicados antes de pintar desde `index.html`): **estilo** (`data-estilo`: Original, Natura; IMPACT y REBEL preparados), **apariencia** (`data-theme`, más "sistema"), **paleta** (`data-paleta`) y **movimiento** (`data-movimiento`; `prefers-reduced-motion` siempre gana). Tokens de forma, tipo, movimiento y series en `tema/tokens.css`; estilos en `tema/estilos/*.css`. Usar `rounded-tarjeta`, `rounded-control` y `rounded-interno` (piezas dentro de un control), no `rounded-2xl`, `rounded-xl` ni `rounded-lg`; sombras con `shadow-tarjeta` o `shadow-elevada`. Información secundaria con `Divulgable` (`ui.tsx`); botones de ícono con `BotonIcono` (44 px táctil). No mezclar `hidden` con una clase de `display` en el mismo elemento (Tailwind no garantiza el orden): envolver. Contraste: `node web/scripts/contraste.mjs`. Detalle: `docs/decisiones-design-system.md`.
 
 ## Paleta (verde)
 

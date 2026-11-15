@@ -32,8 +32,11 @@ para ARM debe prepararse la imagen en otra máquina/CI para esa plataforma.
 
 ## Seguridad y límites conocidos
 
-Settings reales: `HICOTEA_DATABASE_URL`, `HICOTEA_CODIGO_INVITACION`,
-`HICOTEA_COOKIE_SECURE` y `HICOTEA_ORIGENES_PERMITIDOS`. Compose fija las dos últimas
+Settings reales: `HICOTEA_DATABASE_URL`, `HICOTEA_CODIGO_INVITACION` (opcional desde 0010),
+`HICOTEA_COOKIE_SECURE`, `HICOTEA_ORIGENES_PERMITIDOS`, `HICOTEA_URL_PUBLICA` y, para el
+correo de recuperación, `HICOTEA_CORREO_MODO` y `HICOTEA_SMTP_*`
+(ver `docs/administracion-y-recuperacion.md`). Tras desplegar 0010: `alembic upgrade head`
+y `python -m app.cli admin otorgar <usuario>` dentro del contenedor de la API. Compose fija las dos últimas
 a `true` y `["https://hicotea.duckdns.org"]`; genera la URL interna usando una
 contraseña hexadecimal nueva. No copiar `api/.env` ni usar credenciales de desarrollo.
 Los secretos se pasan solo en tiempo de ejecución: no están en los builds ni en
