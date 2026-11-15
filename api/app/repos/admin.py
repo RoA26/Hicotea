@@ -112,7 +112,8 @@ def invitaciones_por_estado(con: Connection) -> dict[str, int]:
 # ====================================================================== cuentas
 
 _SELECT_CUENTA = """
-SELECT u.id, u.nombre_usuario, u.nombre_completo, u.correo, u.rol, u.activo, u.bloqueado_en,
+SELECT u.id, u.nombre_usuario, u.nombre_completo, u.correo,
+       (u.correo_verificado_en IS NOT NULL) AS correo_verificado, u.rol, u.activo, u.bloqueado_en,
        u.fecha_registro, u.ultimo_ingreso_en,
        (SELECT COUNT(*) FROM sesion s WHERE s.id_usuario = u.id AND s.expira_en > now()) AS sesiones_activas
 FROM usuario u

@@ -48,6 +48,7 @@ class CuentaAdmin(BaseModel):
     nombre_usuario: str
     nombre_completo: str
     correo: str | None
+    correo_verificado: bool = False
     rol: Literal["USUARIO", "ADMIN"]
     activo: bool
     bloqueado_en: datetime | None

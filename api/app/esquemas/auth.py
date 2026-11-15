@@ -54,5 +54,47 @@ class UsuarioOut(BaseModel):
     nombre_usuario: str
     nombre_completo: str
     correo: str | None = None
+    correo_verificado: bool = False
     rol: Literal["USUARIO", "ADMIN"] = "USUARIO"
     fecha_registro: datetime
+
+
+# ------------------------------------------------------------------ perfil (/api/cuenta)
+
+
+class PerfilOut(UsuarioOut):
+    # Dirección esperando verificación (nueva, o la actual sin verificar). No es el correo en uso.
+    correo_pendiente: str | None = None
+    correo_pendiente_expira_en: datetime | None = None
+    # False si el servidor no tiene transporte de correo: no se puede verificar nada.
+    correo_disponible: bool
+    sesiones_activas: int
+
+
+class DatosPerfilForm(BaseModel):
+    nombre_completo: str = Field(min_length=1, max_length=100)
+
+
+class CorreoForm(BaseModel):
+    correo: str = Field(max_length=254, pattern=PATRON_CORREO)
+    contrasena_actual: str = Field(min_length=1, max_length=128)
+
+
+class VerificarCorreoForm(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+
+
+class VerificacionOut(BaseModel):
+    mensaje: str
+    correo: str
+
+
+class ContrasenaForm(BaseModel):
+    contrasena_actual: str = Field(min_length=1, max_length=128)
+    contrasena: str = Field(min_length=8, max_length=128)
+    confirmacion_contrasena: str = Field(max_length=128)
+
+
+class SesionesCerradas(BaseModel):
+    mensaje: str
+    cerradas: int

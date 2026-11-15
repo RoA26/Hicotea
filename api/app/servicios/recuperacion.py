@@ -42,10 +42,11 @@ def _para_log(texto: str) -> str:
 
 
 def buscar_cuenta(con: Connection, identificador: str) -> dict | None:
-    """Por nombre de usuario o, si trae @, por correo."""
+    """Por nombre de usuario o, si trae @, por correo **verificado**: una
+    dirección sin verificar no identifica la cuenta para recuperarla."""
     ident = identificador.strip().lower()
     if "@" in ident:
-        return repo_usuario.por_correo(con, ident)
+        return repo_usuario.por_correo(con, ident, solo_verificado=True)
     return repo_usuario.por_nombre_usuario(con, ident)
 
 
@@ -63,7 +64,8 @@ def solicitar(con: Connection, identificador: str) -> None:
     pin = f"{secrets.randbelow(1_000_000):06d}"
     repo.recuperacion_insertar(con, usuario["id"], h.hashear(pin), MINUTOS_VIGENCIA)
 
-    if usuario.get("correo") and correo.disponible():
+    # Solo a un correo verificado: uno sin verificar podría no ser de la persona.
+    if usuario.get("correo") and usuario.get("correo_verificado") and correo.disponible():
         enviado = correo.enviar(correo.Correo(
             para=usuario["correo"],
             asunto="Tu PIN para restablecer la contraseña de Hicotea",
@@ -118,7 +120,7 @@ def restablecer(con: Connection, identificador: str, pin: str, contrasena: str, 
     # Quien tuviera la sesión abierta con la contraseña vieja queda fuera.
     repo_sesion.borrar_todas(con, usuario["id"])
     log.info("Contraseña restablecida para el usuario id=%s.", usuario["id"])
-    if usuario.get("correo"):
+    if usuario.get("correo") and usuario.get("correo_verificado"):
         correo.enviar(correo.Correo(
             para=usuario["correo"],
             asunto="Tu contraseña de Hicotea cambió",

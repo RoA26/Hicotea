@@ -11,7 +11,7 @@ from app.repos import sesion as repo_sesion
 from app.repos import usuario as repo_usuario
 from app.seguridad import hash as h
 from app.seguridad.sesion import hash_token, nuevo_token
-from app.servicios import categorias, invitaciones
+from app.servicios import categorias, invitaciones, verificacion
 
 USUARIO_EN_USO = "Ese nombre de usuario ya está en uso."
 CORREO_EN_USO = "Ese correo ya está asociado a otra cuenta."
@@ -89,6 +89,10 @@ def registrar(con: Connection, form: RegistroForm) -> tuple[dict, str]:
     if invitacion:
         repo_admin.invitacion_asignar_usuario(con, invitacion["id"], usuario["id"])
     categorias.crear_por_defecto(con, usuario["id"])
+    if correo:
+        # El correo del registro queda sin verificar hasta abrir el enlace. Si no
+        # hay transporte o el envío falla, la cuenta se crea igual (se verifica luego desde el perfil).
+        verificacion.enviar_enlace(con, usuario, correo)
     return usuario, _abrir_sesion(con, usuario["id"])
 
 

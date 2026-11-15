@@ -142,3 +142,16 @@ def beto():
     u = Usuario("beto")
     yield u
     u.c.close()
+
+
+def token_de_verificacion(buzon) -> str:
+    """Token del último enlace de verificación enviado al buzón de pruebas."""
+    import re
+
+    for c in reversed(buzon.enviados):
+        m = re.search(r"/verificar-correo\?token=([A-Za-z0-9_\-%]+)", c.texto)
+        if m:
+            from urllib.parse import unquote
+
+            return unquote(m.group(1))
+    raise AssertionError("no hay enlaces de verificación en el buzón")

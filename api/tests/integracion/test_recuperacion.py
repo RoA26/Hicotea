@@ -8,7 +8,7 @@ from sqlalchemy import text
 
 from app import correo
 from app.db import motor
-from tests.integracion.conftest import registro
+from tests.integracion.conftest import registro, token_de_verificacion
 
 
 @pytest.fixture
@@ -20,9 +20,13 @@ def buzon():
 
 
 @pytest.fixture
-def con_correo(cliente):
+def con_correo(cliente, buzon):
+    """Cuenta con correo **verificado** (el registro envía el enlace; se abre aquí)."""
     r = cliente.post("/api/auth/registro", json=registro("tortuga", correo="tortuga@ejemplo.co"))
     assert r.status_code == 201, r.text
+    r = cliente.post("/api/cuenta/correo/verificar", json={"token": token_de_verificacion(buzon)})
+    assert r.status_code == 200, r.text
+    buzon.enviados.clear()
     return cliente
 
 

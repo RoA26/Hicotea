@@ -106,6 +106,13 @@ limitador_pin = LimitadorIntentosLogin(maximo_por_usuario=10, maximo_por_ip=30)
 limitador_registro = LimitadorIntentosLogin(maximo_por_usuario=10, maximo_por_ip=10)
 
 
+# Perfil: contraseña actual incorrecta al cambiar correo o contraseña (5 por
+# cuenta e IP, 20 por IP) y enlaces de verificación inválidos (10 por IP).
+limitador_reautenticacion = LimitadorIntentosLogin(maximo_por_usuario=5, maximo_por_ip=20)
+limitador_verificacion = LimitadorIntentosLogin(maximo_por_usuario=10, maximo_por_ip=10)
+
+
 def reiniciar_todos() -> None:
-    for x in (limitador, limitador_recuperacion, limitador_pin, limitador_registro):
+    for x in (limitador, limitador_recuperacion, limitador_pin, limitador_registro,
+              limitador_reautenticacion, limitador_verificacion):
         x.reiniciar()

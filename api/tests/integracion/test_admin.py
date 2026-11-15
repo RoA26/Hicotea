@@ -248,7 +248,7 @@ def test_listado_busqueda_y_filtros_sin_datos_financieros(admin, ana, beto):
     r = admin.get("/api/admin/usuarios", params={"q": "an"}).json()
     assert [c["nombre_usuario"] for c in r["elementos"]] == ["ana"]
     assert set(r["elementos"][0]) == {
-        "id", "nombre_usuario", "nombre_completo", "correo", "rol", "activo", "bloqueado_en",
+        "id", "nombre_usuario", "nombre_completo", "correo", "correo_verificado", "rol", "activo", "bloqueado_en",
         "fecha_registro", "ultimo_ingreso_en", "sesiones_activas",
     }
     # Los comodines se tratan como texto.
