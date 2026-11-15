@@ -9,6 +9,7 @@ import { Icono } from '../componentes/Iconos'
 import { Modal } from '../componentes/Modal'
 import { VistaTablero } from '../componentes/VistaTablero'
 import { Boton, BotonEnlace, Cargando, cx, Encabezado, ErrorCarga, Insignia, Seccion, Tarjeta } from '../componentes/ui'
+import { esRecurrenteAvanzado } from '../lib/correcciones'
 import { useCatalogos } from '../lib/catalogos'
 import { useDatos } from '../lib/datos'
 import { dinero, fechaCorta, fechaDia } from '../lib/formato'
@@ -113,11 +114,12 @@ export default function Inicio() {
 
   async function omitir(r: Recurrente) {
     try {
-      const n = await recurrentes.omitir(r.id)
+      const n = await recurrentes.omitir(r.id, r.proxima_fecha)
       avisar(`${r.nombre} omitido. Próxima fecha: ${fechaCorta(n.proxima_fecha)}.`)
       void t.recargar()
     } catch (e) {
       avisar((e as Error).message, { tono: 'error' })
+      if (esRecurrenteAvanzado(e)) void t.recargar()
     }
   }
 
@@ -145,7 +147,7 @@ export default function Inicio() {
       <Modal abierto={producido} onCerrar={() => setProducido(false)} titulo="Producido del día">
         {cat.datos ? <FormProducido catalogos={cat.datos} alTerminar={() => setProducido(false)} /> : <Cargando />}
       </Modal>
-      <ConfirmarRecurrente recurrente={confirmando} onCerrar={() => setConfirmando(null)} alTerminar={() => setConfirmando(null)} />
+      <ConfirmarRecurrente recurrente={confirmando} onCerrar={() => setConfirmando(null)} alTerminar={() => setConfirmando(null)} recargar={() => void t.recargar()} />
     </>
   )
 }

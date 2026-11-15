@@ -6,12 +6,17 @@ mismas reglas que cualquier ingreso o gasto."""
 from sqlalchemy import Connection
 
 from app.errores import NoEncontrado, ReglaNegocio
-from app.esquemas.entradas import ConfirmacionRecurrenteForm, MovimientoForm, RecurrenteForm
+from app.esquemas.entradas import ConfirmacionRecurrenteForm, MovimientoForm, OmisionRecurrenteForm, RecurrenteForm
 from app.modelo import calculos, dinero, reloj
 from app.modelo.enums import Periodicidad, TipoMovimiento
 from app.repos import otros as repo
 from app.servicios import cajitas, movimientos
 from app.servicios.serializacion import serializar_finanzas
+
+# 409 cuando la ocurrencia que el usuario quiere confirmar u omitir ya no es la
+# vigente: ya se registró, se omitió o se editó la fecha (doble toque,
+# reintento de red, otra pestaña). La web recarga y muestra la fecha nueva.
+CODIGO_RECURRENTE_AVANZO = "RECURRENTE_AVANZO"
 
 
 def _con_estado(r: dict, hoy) -> dict:
@@ -62,13 +67,28 @@ def eliminar(con: Connection, id_usuario: int, id_recurrente: int) -> None:
     repo.recurrente_eliminar(con, id_usuario, id_recurrente)
 
 
+def _exigir_ocurrencia(r: dict, ocurrencia, accion: str) -> None:
+    """Una confirmación u omisión vale solo para la ocurrencia que el usuario vio."""
+    if r["proxima_fecha"] != ocurrencia:
+        proxima = r["proxima_fecha"]
+        raise ReglaNegocio(
+            f"Esa fecha de {r['nombre']} ya no está pendiente: se registró, se omitió o se cambió. "
+            f"La próxima es el {proxima:%d/%m/%Y}; no se {accion} nada.",
+            estado=409,
+            codigo=CODIGO_RECURRENTE_AVANZO,
+            datos={"proxima_fecha": proxima.isoformat()},
+        )
+
+
 def confirmar(con: Connection, id_usuario: int, id_recurrente: int, conf: ConfirmacionRecurrenteForm) -> dict:
-    """Registra el movimiento del periodo y programa el siguiente. Todo en una
-    transacción: si el registro falla, la fecha no avanza."""
+    """Registra el movimiento de la ocurrencia `conf.ocurrencia` y programa la
+    siguiente. Todo en una transacción: si el registro falla, la fecha no avanza;
+    si la ocurrencia ya no es la vigente, no se registra nada (409)."""
     serializar_finanzas(con, id_usuario)  # antes de leer la próxima fecha: dos confirmaciones no avanzan en paralelo
     r = obtener(con, id_usuario, id_recurrente)
     if not r["activo"]:
         raise ReglaNegocio("Este recurrente está pausado.")
+    _exigir_ocurrencia(r, conf.ocurrencia, "registró")
     hoy = reloj.hoy()
     fecha = conf.fecha or (hoy if r["proxima_fecha"] > hoy else r["proxima_fecha"])
     monto = dinero.a_texto(r["monto"]) if dinero.es_vacio_o_cero(conf.monto) else conf.monto
@@ -89,16 +109,24 @@ def confirmar(con: Connection, id_usuario: int, id_recurrente: int, conf: Confir
     return {**obtener(con, id_usuario, id_recurrente), "id_movimiento": id_movimiento}
 
 
-def omitir(con: Connection, id_usuario: int, id_recurrente: int) -> dict:
-    """Salta este periodo sin registrar nada (ej. este mes no se pagó)."""
+def omitir(con: Connection, id_usuario: int, id_recurrente: int, form: OmisionRecurrenteForm) -> dict:
+    """Salta la ocurrencia `form.ocurrencia` sin registrar nada (ej. este mes no se pagó)."""
     serializar_finanzas(con, id_usuario)
-    _avanzar(con, id_usuario, obtener(con, id_usuario, id_recurrente))
+    r = obtener(con, id_usuario, id_recurrente)
+    _exigir_ocurrencia(r, form.ocurrencia, "omitió")
+    _avanzar(con, id_usuario, r)
     return obtener(con, id_usuario, id_recurrente)
 
 
 def _avanzar(con: Connection, id_usuario: int, r: dict) -> None:
+    """UPDATE condicional sobre la fecha leída: aunque algo se saltara el candado
+    del usuario, una ocurrencia no avanza dos veces. El fallo revierte también
+    el movimiento, que va en la misma transacción."""
     siguiente = Periodicidad(r["periodicidad"]).siguiente(r["proxima_fecha"], r["dia_ancla"])
-    repo.recurrente_actualizar_proxima(con, id_usuario, r["id"], siguiente)
+    if not repo.recurrente_avanzar_si(con, id_usuario, r["id"], r["proxima_fecha"], siguiente):
+        _exigir_ocurrencia(obtener(con, id_usuario, r["id"]), r["proxima_fecha"], "registró")
+        raise ReglaNegocio("El recurrente cambió mientras lo confirmabas. Intenta de nuevo.", estado=409,
+                           codigo=CODIGO_RECURRENTE_AVANZO)
 
 
 def _construir(con: Connection, id_usuario: int, f: RecurrenteForm, excluido: int | None) -> dict:

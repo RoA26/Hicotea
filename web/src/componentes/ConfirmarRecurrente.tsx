@@ -1,23 +1,34 @@
 import { useState, type FormEvent } from 'react'
 import { recurrentes } from '../api/cliente'
 import type { Recurrente } from '../api/tipos'
+import { esRecurrenteAvanzado } from '../lib/correcciones'
 import { useEnvio } from '../lib/datos'
 import { dinero, hoy, montoEditable } from '../lib/formato'
 import { useRegistroRapido } from '../lib/registro'
+import { useAvisar } from './Globales'
 import { Modal } from './Modal'
 import { AlertaError, Boton, Campo, Entrada, EntradaMonto } from './ui'
 
-/** Confirma un recurrente (registra el movimiento del periodo y avanza la fecha). */
-export function ConfirmarRecurrente({ recurrente, onCerrar, alTerminar }: { recurrente: Recurrente | null; onCerrar: () => void; alTerminar: () => void }) {
+type Props = {
+  recurrente: Recurrente | null
+  onCerrar: () => void
+  alTerminar: () => void
+  /** Se llama cuando la ocurrencia ya no estaba pendiente (409): la lista quedó vieja. */
+  recargar: () => void
+}
+
+/** Confirma una ocurrencia de un recurrente (registra el movimiento y avanza la fecha). */
+export function ConfirmarRecurrente({ recurrente, onCerrar, alTerminar, recargar }: Props) {
   return (
     <Modal abierto={!!recurrente} onCerrar={onCerrar} titulo={recurrente ? `Confirmar ${recurrente.nombre}` : ''}>
-      {recurrente && <Formulario key={recurrente.id} recurrente={recurrente} onCerrar={onCerrar} alTerminar={alTerminar} />}
+      {recurrente && <Formulario key={`${recurrente.id}-${recurrente.proxima_fecha}`} recurrente={recurrente} onCerrar={onCerrar} alTerminar={alTerminar} recargar={recargar} />}
     </Modal>
   )
 }
 
-function Formulario({ recurrente, onCerrar, alTerminar }: { recurrente: Recurrente; onCerrar: () => void; alTerminar: () => void }) {
+function Formulario({ recurrente, onCerrar, alTerminar, recargar }: Omit<Props, 'recurrente'> & { recurrente: Recurrente }) {
   const registrado = useRegistroRapido()
+  const avisar = useAvisar()
   const { enviando, error, errores, enviar } = useEnvio()
   // Si ya pasó la fecha se propone esa; si no, hoy (la api no acepta fechas futuras).
   const [f, setF] = useState(() => ({
@@ -27,7 +38,18 @@ function Formulario({ recurrente, onCerrar, alTerminar }: { recurrente: Recurren
 
   async function alEnviar(e: FormEvent) {
     e.preventDefault()
-    const r = await enviar(() => recurrentes.confirmar(recurrente.id, f))
+    const r = await enviar(async () => {
+      try {
+        return await recurrentes.confirmar(recurrente.id, { ...f, ocurrencia: recurrente.proxima_fecha })
+      } catch (e) {
+        // Ya se registró u omitió (doble toque, otra pestaña): no es un error que corregir en el formulario.
+        if (!esRecurrenteAvanzado(e)) throw e
+        avisar((e as Error).message, { tono: 'error' })
+        onCerrar()
+        recargar()
+        return undefined
+      }
+    })
     if (r) {
       registrado(r)
       alTerminar()

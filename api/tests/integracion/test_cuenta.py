@@ -24,7 +24,7 @@ def test_confirmar_un_recurrente_registra_el_movimiento_y_avanza_con_dia_ancla(a
     assert [p["nombre"] for p in ana.get("/api/recurrentes/pendientes").json()] == ["Arriendo"]
 
     # Aún no llega la fecha: se registra con fecha de hoy y salta a febrero (28).
-    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={"monto": "820.000"})
+    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={"ocurrencia": "2027-01-31", "monto": "820.000"})
     assert r.status_code == 200, r.text
     mov = ana.get(f"/api/movimientos/{r.json()['id_movimiento']}").json()
     assert (mov["fecha"], mov["monto"], mov["descripcion"]) == ("2027-01-29", "820000.00", "Arriendo")
@@ -32,13 +32,13 @@ def test_confirmar_un_recurrente_registra_el_movimiento_y_avanza_con_dia_ancla(a
 
     # Ya vencido: se registra en su fecha y vuelve al 31 en marzo.
     hoy(date(2027, 3, 2))
-    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={})
+    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={"ocurrencia": "2027-02-28"})
     assert ana.get(f"/api/movimientos/{r.json()['id_movimiento']}").json()["fecha"] == "2027-02-28"
     assert ana.get(f"/api/recurrentes/{rec['id']}").json()["proxima_fecha"] == "2027-03-31"
 
     # Omitir avanza sin registrar.
     antes = ana.get("/api/movimientos", params={"desde": "2027-01-01", "hasta": "2027-12-31"}).json()["total_registros"]
-    assert ana.post(f"/api/recurrentes/{rec['id']}/omitir").json()["proxima_fecha"] == "2027-04-30"
+    assert ana.post(f"/api/recurrentes/{rec['id']}/omitir", json={"ocurrencia": "2027-03-31"}).json()["proxima_fecha"] == "2027-04-30"
     assert ana.get("/api/movimientos", params={"desde": "2027-01-01", "hasta": "2027-12-31"}).json()["total_registros"] == antes
 
 
@@ -48,12 +48,12 @@ def test_si_el_registro_falla_la_fecha_del_recurrente_no_avanza(ana):
         "nombre": "Luz", "tipo": "GASTO", "monto": "50.000", "id_categoria": ana.cat("Servicios públicos"),
         "id_cajita_origen": caja["id"], "periodicidad": "MENSUAL", "proxima_fecha": str(HOY),
     }).json()
-    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={})
+    r = ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={"ocurrencia": str(HOY)})
     assert r.status_code == 422 and "solo tiene" in r.json()["detail"]
     assert ana.get(f"/api/recurrentes/{rec['id']}").json()["proxima_fecha"] == str(HOY)
     # Pausado no se confirma.
     ana.patch(f"/api/recurrentes/{rec['id']}/estado", json={"activa": False})
-    assert "pausado" in ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={}).json()["detail"]
+    assert "pausado" in ana.post(f"/api/recurrentes/{rec['id']}/confirmar", json={"ocurrencia": str(HOY)}).json()["detail"]
 
 
 # ---------------------------------------------------------------- atajos

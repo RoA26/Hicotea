@@ -236,9 +236,10 @@ export const recurrentes = {
   actualizar: (id: number, f: RecurrenteForm) => put<T.Recurrente>(`/recurrentes/${id}`, f),
   estado: (id: number, activa: boolean) => patch<T.Recurrente>(`/recurrentes/${id}/estado`, { activa }),
   eliminar: (id: number) => del<void>(`/recurrentes/${id}`),
-  confirmar: (id: number, f: { fecha: string; monto: string }) =>
+  /** `ocurrencia` es la `proxima_fecha` que se vio: si ya avanzó, la API responde 409 RECURRENTE_AVANZO. */
+  confirmar: (id: number, f: { ocurrencia: string; fecha: string; monto: string }) =>
     post<T.RespuestaConSaldo>(`/recurrentes/${id}/confirmar`, f),
-  omitir: (id: number) => post<T.Recurrente>(`/recurrentes/${id}/omitir`),
+  omitir: (id: number, ocurrencia: string) => post<T.Recurrente>(`/recurrentes/${id}/omitir`, { ocurrencia }),
 }
 
 export const atajos = {

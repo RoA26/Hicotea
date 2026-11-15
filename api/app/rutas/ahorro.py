@@ -7,6 +7,7 @@ from app.esquemas.entradas import (
     ConfirmacionRecurrenteForm,
     EstadoForm,
     MetaForm,
+    OmisionRecurrenteForm,
     OperacionCajitaForm,
     PresupuestoForm,
     RecurrenteForm,
@@ -195,5 +196,5 @@ def confirmar_recurrente(id_recurrente: int, form: ConfirmacionRecurrenteForm, u
 
 
 @router.post("/recurrentes/{id_recurrente}/omitir", response_model=RecurrenteOut)
-def omitir_recurrente(id_recurrente: int, u: IdUsuario, con: Con):
-    return recurrentes.omitir(con, u, id_recurrente)
+def omitir_recurrente(id_recurrente: int, form: OmisionRecurrenteForm, u: IdUsuario, con: Con):
+    return recurrentes.omitir(con, u, id_recurrente, form)

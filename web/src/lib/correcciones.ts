@@ -5,6 +5,11 @@ type Confirmar = (o: { titulo: string; mensaje?: string; aceptar?: string; pelig
 /** Código que la API devuelve (409) cuando una corrección histórica dejaría el disponible negativo (D-F2). */
 export const DISPONIBLE_NEGATIVO = 'DISPONIBLE_NEGATIVO'
 
+/** 409 cuando la ocurrencia de un recurrente ya se registró, se omitió o cambió de fecha. */
+export const RECURRENTE_AVANZO = 'RECURRENTE_AVANZO'
+
+export const esRecurrenteAvanzado = (e: unknown) => e instanceof ErrorApi && e.codigo === RECURRENTE_AVANZO
+
 /**
  * D-F2: ejecuta una corrección histórica (eliminar o rebajar un ingreso,
  * eliminar un retiro). Si la API avisa que el disponible quedaría negativo,

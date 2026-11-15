@@ -4,7 +4,7 @@ atajos y recuperación de contraseña."""
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Connection
+from sqlalchemy import Connection, text
 
 from app.repos._sql import EXCLUIDO, ejecutar, todos, uno, valor
 from app.repos.cajita import EXPRESION_SALDO
@@ -69,10 +69,16 @@ def recurrente_actualizar(con: Connection, id_usuario: int, id_recurrente: int, 
     )
 
 
-def recurrente_actualizar_proxima(con: Connection, id_usuario: int, id_recurrente: int, proxima: date) -> None:
-    ejecutar(
-        con, "UPDATE recurrente SET proxima_fecha = :p WHERE id = :id AND id_usuario = :u", p=proxima, id=id_recurrente, u=id_usuario
-    )
+def recurrente_avanzar_si(con: Connection, id_usuario: int, id_recurrente: int, ocurrencia: date, proxima: date) -> bool:
+    """Avanza solo si la fecha sigue siendo `ocurrencia` (UPDATE condicional).
+    Devuelve False si otra operación ya la movió."""
+    return con.execute(
+        text(
+            "UPDATE recurrente SET proxima_fecha = :p "
+            "WHERE id = :id AND id_usuario = :u AND proxima_fecha = :o"
+        ),
+        {"p": proxima, "id": id_recurrente, "u": id_usuario, "o": ocurrencia},
+    ).rowcount == 1
 
 
 def recurrente_cambiar_estado(con: Connection, id_usuario: int, id_recurrente: int, activo: bool) -> None:

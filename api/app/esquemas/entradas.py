@@ -131,8 +131,15 @@ class RecurrenteForm(BaseModel):
 
 
 class ConfirmacionRecurrenteForm(BaseModel):
+    # La `proxima_fecha` que vio el usuario: la API solo confirma esa ocurrencia.
+    # Si ya avanzó (doble toque, reintento, otra pestaña), responde 409.
+    ocurrencia: date
     fecha: date | None = None
     monto: TextoMonto | None = None
+
+
+class OmisionRecurrenteForm(BaseModel):
+    ocurrencia: date
 
 
 class AtajoForm(BaseModel):

@@ -5,6 +5,7 @@ import { ConfirmarRecurrente } from '../componentes/ConfirmarRecurrente'
 import { useAvisar, useConfirmar, useSaldo } from '../componentes/Globales'
 import { Icono } from '../componentes/Iconos'
 import { Boton, BotonEnlace, Cargando, Encabezado, ErrorCarga, Insignia, Tarjeta, Vacio } from '../componentes/ui'
+import { esRecurrenteAvanzado } from '../lib/correcciones'
 import { useDatos } from '../lib/datos'
 import { dinero, fechaLarga, NOMBRE_PERIODICIDAD } from '../lib/formato'
 
@@ -22,6 +23,7 @@ export default function Recurrentes() {
       void lista.recargar()
     } catch (e) {
       avisar((e as Error).message, { tono: 'error' })
+      if (esRecurrenteAvanzado(e)) void lista.recargar()
     }
   }
 
@@ -77,7 +79,7 @@ export default function Recurrentes() {
                     <Boton chico onClick={() => setConfirmando(r)}>
                       Confirmar
                     </Boton>
-                    <Boton chico variante="fantasma" onClick={() => accion(() => api.omitir(r.id), `${r.nombre} omitido esta vez.`)}>
+                    <Boton chico variante="fantasma" onClick={() => accion(() => api.omitir(r.id, r.proxima_fecha), `${r.nombre} omitido esta vez.`)}>
                       Omitir
                     </Boton>
                   </>
@@ -96,7 +98,7 @@ export default function Recurrentes() {
           ))}
         </div>
       )}
-      <ConfirmarRecurrente recurrente={confirmando} onCerrar={() => setConfirmando(null)} alTerminar={() => setConfirmando(null)} />
+      <ConfirmarRecurrente recurrente={confirmando} onCerrar={() => setConfirmando(null)} alTerminar={() => setConfirmando(null)} recargar={() => void lista.recargar()} />
     </>
   )
 }
