@@ -50,7 +50,7 @@ function BotonesRapidos({ atajos, alProducido }: { atajos: Atajo[]; alProducido:
               disabled={usando !== null}
               onClick={() => usar(a)}
               className={cx(
-                'cifra rounded-full border px-3 py-2 text-sm transition-colors disabled:opacity-50',
+                'cifra min-h-11 rounded-full border px-3.5 text-sm transition-colors disabled:opacity-50',
                 a.tipo === 'INGRESO' ? 'border-ingreso/30 hover:bg-ingreso/10' : 'border-gasto/30 hover:bg-gasto/10',
               )}
             >

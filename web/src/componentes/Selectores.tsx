@@ -9,11 +9,15 @@ export function SelectorCategoria({
   valor,
   onCambio,
   invalido,
+  'aria-describedby': describe,
+  vacio = 'Elige una categoría',
 }: {
   categorias: Categoria[]
   valor: number | null
   onCambio: (id: number | null) => void
   invalido?: boolean
+  'aria-describedby'?: string
+  vacio?: string
 }) {
   const tipos = [...new Set(categorias.map((c) => c.tipo))]
   const opcion = (c: Categoria) => (
@@ -23,8 +27,8 @@ export function SelectorCategoria({
     </option>
   )
   return (
-    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined}>
-      <option value="">Elige una categoría</option>
+    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined} aria-describedby={describe}>
+      <option value="">{vacio}</option>
       {tipos.length > 1
         ? tipos.map((t) => (
             <optgroup key={t} label={NOMBRE_TIPO_CATEGORIA[t]}>
@@ -42,15 +46,17 @@ export function SelectorFuente({
   onCambio,
   vacio = 'Sin fuente',
   invalido,
+  'aria-describedby': describe,
 }: {
   fuentes: Fuente[]
   valor: number | null
   onCambio: (id: number | null) => void
   vacio?: string
   invalido?: boolean
+  'aria-describedby'?: string
 }) {
   return (
-    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined}>
+    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined} aria-describedby={describe}>
       <option value="">{vacio}</option>
       {fuentes
         .filter((f) => f.activa || f.id === valor)
@@ -69,15 +75,17 @@ export function SelectorCajita({
   onCambio,
   vacio = 'Elige una cajita',
   invalido,
+  'aria-describedby': describe,
 }: {
   cajitas: Cajita[]
   valor: number | null
   onCambio: (id: number | null) => void
   vacio?: string
   invalido?: boolean
+  'aria-describedby'?: string
 }) {
   return (
-    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined}>
+    <Selector value={valor ?? ''} onChange={(e) => onCambio(aId(e.target.value))} aria-invalid={invalido || undefined} aria-describedby={describe}>
       <option value="">{vacio}</option>
       {cajitas
         .filter((c) => c.activa || c.id === valor)

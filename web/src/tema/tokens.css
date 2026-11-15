@@ -29,6 +29,8 @@
   --radio-control: 0.75rem; /* rounded-xl */
   --radio-modal: 1.5rem; /* rounded-3xl */
   --radio-insignia: 9999px;
+  /* Piezas dentro de un control (segmentos, presets): el radio del control menos su relleno. */
+  --radio-interno: max(0px, calc(var(--radio-control) - 0.25rem));
   --borde-ancho: 1px;
   --sombra-tarjeta: 0 0 #0000; /* sombra nula válida dentro de la lista de box-shadow */
   --sombra-elevada: 0 10px 15px -3px rgb(0 0 0 / 0.25), 0 4px 6px -4px rgb(0 0 0 / 0.25);
@@ -112,6 +114,7 @@
   --radius-control: var(--radio-control);
   --radius-modal: var(--radio-modal);
   --radius-insignia: var(--radio-insignia);
+  --radius-interno: var(--radio-interno);
   --shadow-tarjeta: var(--sombra-tarjeta);
   --shadow-elevada: var(--sombra-elevada);
   --font-texto: var(--fuente-texto);

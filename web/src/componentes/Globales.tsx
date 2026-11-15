@@ -154,7 +154,7 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
               key={a.id}
               role={a.tono === 'error' ? 'alert' : 'status'}
               className={cx(
-                'pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-tarjeta border px-4 py-3 text-sm shadow-xl',
+                'pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-tarjeta border px-4 py-3 text-sm shadow-elevada',
                 'bg-superficie',
                 a.tono === 'error' ? 'border-gasto/40 text-gasto' : 'border-borde text-texto',
               )}

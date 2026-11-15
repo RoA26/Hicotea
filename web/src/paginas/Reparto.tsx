@@ -100,7 +100,7 @@ export default function Reparto() {
         titulo="Repartir"
         subtitulo={
           <span className="flex flex-col gap-1">
-            <Link to="/caparazon" className="text-sm text-acento hover:underline">
+            <Link to="/caparazon" className="-my-3 inline-flex min-h-11 items-center self-start text-sm text-acento hover:underline">
               ← Caparazón
             </Link>
             <span>Distribuye lo disponible entre las cajitas de tu caparazón según sus porcentajes.</span>

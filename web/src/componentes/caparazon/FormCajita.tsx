@@ -166,7 +166,7 @@ export function FormCajita({
                       key={p}
                       type="button"
                       onClick={() => pon({ porcentaje: String(p) })}
-                      className={`h-8 rounded-lg px-2.5 text-xs font-semibold transition-colors ${
+                      className={`h-9 rounded-interno px-2.5 text-xs font-semibold transition-colors ${
                         activo
                           ? 'bg-acento text-sobre-acento'
                           : 'bg-superficie border border-borde text-texto-suave hover:border-acento/50 hover:text-texto'

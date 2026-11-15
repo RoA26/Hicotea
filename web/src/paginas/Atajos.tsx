@@ -441,7 +441,7 @@ export default function Atajos() {
           role="tab"
           aria-selected={pestana === 'atajos'}
           onClick={() => setPestana('atajos')}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-interno px-4 py-2.5 text-sm font-medium transition-colors ${
             pestana === 'atajos' ? 'bg-acento text-sobre-acento' : 'text-texto-suave hover:text-texto'
           }`}
         >
@@ -452,7 +452,7 @@ export default function Atajos() {
           role="tab"
           aria-selected={pestana === 'categorias'}
           onClick={() => setPestana('categorias')}
-          className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-interno px-4 py-2.5 text-sm font-medium transition-colors ${
             pestana === 'categorias' ? 'bg-acento text-sobre-acento' : 'text-texto-suave hover:text-texto'
           }`}
         >

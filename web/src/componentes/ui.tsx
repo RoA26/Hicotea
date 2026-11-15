@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import { cloneElement, isValidElement, useId, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
 import { Link, type LinkProps } from 'react-router'
 import type { ErrorApi } from '../api/cliente'
 import { dinero } from '../lib/formato'
@@ -50,6 +50,26 @@ export function BotonEnlace({
   return <Link className={cx(claseBoton(variante, chico), className)} {...p} />
 }
 
+/** Botón solo con ícono: 44 px en táctil, 36 px desde `sm`. Exige `aria-label`. */
+export function BotonIcono({
+  className,
+  children,
+  ...p
+}: ButtonHTMLAttributes<HTMLButtonElement> & { 'aria-label': string }) {
+  return (
+    <button
+      type="button"
+      {...p}
+      className={cx(
+        'grid size-11 shrink-0 place-items-center rounded-control text-texto-suave transition-colors hover:bg-superficie-2 hover:text-texto disabled:pointer-events-none disabled:opacity-50 sm:size-9',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 // ------------------------------------------------------------------ formularios
 
 export function Campo({
@@ -65,16 +85,30 @@ export function Campo({
   children: ReactNode
   className?: string
 }) {
+  // La ayuda y el error van fuera del <label> y se enlazan con aria-describedby:
+  // así el nombre accesible del campo es solo la etiqueta.
+  const id = useId()
+  const descripcion = error || ayuda ? `${id}-descripcion` : undefined
+  const control =
+    descripcion && isValidElement<{ 'aria-describedby'?: string }>(children)
+      ? cloneElement(children, { 'aria-describedby': descripcion })
+      : children
   return (
-    <label className={cx('block', className)}>
-      <span className="mb-1.5 block text-sm font-medium text-texto-suave">{etiqueta}</span>
-      {children}
+    <div className={cx('block', className)}>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium text-texto-suave">{etiqueta}</span>
+        {control}
+      </label>
       {error ? (
-        <span className="mt-1 block text-sm text-gasto">{error}</span>
+        <span id={descripcion} className="mt-1 block text-sm text-gasto">
+          {error}
+        </span>
       ) : ayuda ? (
-        <span className="mt-1 block text-xs text-texto-suave">{ayuda}</span>
+        <span id={descripcion} className="mt-1 block text-xs text-texto-suave">
+          {ayuda}
+        </span>
       ) : null}
-    </label>
+    </div>
   )
 }
 
@@ -141,7 +175,7 @@ export function Segmentos<T extends string>({
             aria-checked={activo}
             onClick={() => onCambio(o.valor)}
             className={cx(
-              'h-9 rounded-lg text-sm font-medium transition-colors',
+              'h-10 rounded-interno text-sm font-medium transition-colors',
               activo
                 ? o.tono === 'gasto'
                   ? 'bg-gasto text-sobre-acento'
@@ -219,6 +253,66 @@ export function Seccion({ titulo, acciones, children }: { titulo: string; accion
         {acciones}
       </div>
       {children}
+    </section>
+  )
+}
+
+/**
+ * Divulgación progresiva: información secundaria plegada detrás de un
+ * encabezado con resumen. El contenido no se monta mientras está cerrado
+ * (las gráficas no cuestan nada si nadie las abre). Recuerda la elección por
+ * `clave`; sin elección previa, abre en pantallas anchas y cierra en el celular.
+ */
+export function Divulgable({
+  clave,
+  titulo,
+  resumen,
+  children,
+}: {
+  clave: string
+  titulo: string
+  resumen?: ReactNode
+  children: ReactNode
+}) {
+  const id = useId()
+  const almacen = `hicotea:abierto:${clave}`
+  const [abierto, setAbierto] = useState(() => {
+    try {
+      const v = localStorage.getItem(almacen)
+      if (v !== null) return v === '1'
+    } catch {
+      /* sin almacenamiento */
+    }
+    return typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+  })
+  const alternar = () => {
+    setAbierto(!abierto)
+    try {
+      localStorage.setItem(almacen, abierto ? '0' : '1')
+    } catch {
+      /* sin almacenamiento */
+    }
+  }
+  return (
+    <section className="mt-6">
+      <button
+        type="button"
+        onClick={alternar}
+        aria-expanded={abierto}
+        aria-controls={id}
+        className="flex min-h-11 w-full items-center gap-3 rounded-tarjeta border border-borde bg-superficie px-4 py-3 text-left transition-colors hover:border-acento/50"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">{titulo}</span>
+          {resumen && <span className="block truncate text-sm text-texto-suave">{resumen}</span>}
+        </span>
+        <svg viewBox="0 0 24 24" aria-hidden className={cx('size-5 shrink-0 text-texto-suave transition-transform', abierto && 'rotate-180')} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      <div id={id} hidden={!abierto}>
+        {abierto && children}
+      </div>
     </section>
   )
 }

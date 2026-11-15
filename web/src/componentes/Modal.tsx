@@ -33,7 +33,10 @@ export function Modal({
     return () => {
       document.removeEventListener('keydown', alTeclear)
       document.body.style.overflow = ''
-      previo?.focus?.()
+      // Devuelve el foco a quien abrió el modal solo si se perdió (quedó en <body>).
+      // Si el modal se cerró al navegar, la pantalla nueva ya pudo enfocar su primer campo.
+      const actual = document.activeElement
+      if (!actual || actual === document.body || caja.current?.contains(actual)) previo?.focus?.()
     }
   }, [abierto])
 
@@ -47,7 +50,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={id}
         tabIndex={-1}
-        className="anim-modal relative max-h-[90dvh] w-full overflow-y-auto rounded-t-modal border border-borde bg-superficie p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl outline-none sm:max-w-md sm:rounded-modal"
+        className="anim-modal relative max-h-[90dvh] w-full overflow-y-auto rounded-t-modal border border-borde bg-superficie p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-elevada outline-none sm:max-w-md sm:rounded-modal"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id={id} className="text-lg font-semibold">

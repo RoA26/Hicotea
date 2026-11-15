@@ -201,7 +201,7 @@ function ListaCaparazon({ items, seleccion, alElegir }: { items: CajitaCaparazon
           <li key={id} className={`rounded-tarjeta border bg-superficie p-4 shadow-tarjeta ${seleccion === id ? 'border-acento' : 'border-borde'}`}>
             <div className="flex items-start gap-2">
               <MuestraSerie serie={x.serie} className="mt-1 size-4" />
-              <button type="button" onClick={() => alElegir(id)} aria-pressed={seleccion === id} className="min-w-0 flex-1 text-left">
+              <button type="button" onClick={() => alElegir(id)} aria-pressed={seleccion === id} className="-my-2.5 min-h-11 min-w-0 flex-1 py-2.5 text-left">
                 <span className="block truncate font-semibold hover:text-acento">
                   {x.numero}. {x.cajita.nombre}
                 </span>
