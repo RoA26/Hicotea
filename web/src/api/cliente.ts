@@ -140,10 +140,14 @@ export const auth = {
     contrasena: string
     confirmacion_contrasena: string
     codigo_invitacion: string
+    correo?: string | null
   }) => post<T.Usuario>('/auth/registro', datos),
+  /** ¿Sirve este enlace de invitación? Si va asociado a un correo, lo devuelve. */
+  invitacion: (token: string) => post<{ valida: boolean; correo: string | null }>('/auth/invitacion', { token }),
   login: (datos: { nombre_usuario: string; contrasena: string }) => post<T.Usuario>('/auth/login', datos),
   logout: () => post<void>('/auth/logout'),
   yo: () => get<T.Usuario>('/auth/yo'),
+  /** `nombre_usuario` acepta también el correo de la cuenta. */
   recuperar: (nombre_usuario: string) => post<T.Mensaje>('/auth/recuperar', { nombre_usuario }),
   restablecer: (datos: {
     nombre_usuario: string
@@ -254,4 +258,20 @@ export const compartir = {
   movimientos: (titular: number, f: T.FiltroMovimientos = {}) =>
     get<T.PaginaMovimientos>(`/compartido/${titular}/movimientos`, f),
   calendario: (titular: number, mes?: string) => get<T.MesCalendario>(`/compartido/${titular}/calendario`, { mes }),
+}
+
+/** Panel de administración. La API valida el rol en cada petición (403 si no es administrador). */
+export const admin = {
+  resumen: () => get<T.ResumenAdmin>('/admin/resumen'),
+  usuarios: (f: { q?: string; estado?: 'ACTIVA' | 'BLOQUEADA'; rol?: T.Rol; pagina?: number } = {}) =>
+    get<T.Pagina<T.CuentaAdmin>>('/admin/usuarios', f),
+  bloquear: (id: number) => post<T.CuentaAdmin>(`/admin/usuarios/${id}/bloquear`),
+  desbloquear: (id: number) => post<T.CuentaAdmin>(`/admin/usuarios/${id}/desbloquear`),
+  cerrarSesiones: (id: number) => post<T.CuentaAdmin>(`/admin/usuarios/${id}/cerrar-sesiones`),
+  invitaciones: (f: { estado?: T.EstadoInvitacion; pagina?: number } = {}) =>
+    get<T.Pagina<T.InvitacionAdmin>>('/admin/invitaciones', f),
+  crearInvitacion: (f: { dias: number; correo?: string | null; nota?: string | null }) =>
+    post<T.InvitacionCreada>('/admin/invitaciones', f),
+  revocarInvitacion: (id: number) => post<T.InvitacionAdmin>(`/admin/invitaciones/${id}/revocar`),
+  auditoria: (pagina = 0) => get<T.Pagina<T.EventoAuditoria>>('/admin/auditoria', { pagina }),
 }

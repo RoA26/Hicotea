@@ -1,4 +1,4 @@
-import { StrictMode, type ReactNode } from 'react'
+import { lazy, StrictMode, Suspense, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router'
 import { ProveedorAvisos, ProveedorConfirmar, ProveedorSaldo, ProveedorSesion, useSesion } from './componentes/Globales'
@@ -31,6 +31,9 @@ import { aplicarPreferenciasGuardadas } from './tema/tema'
 
 aplicarPreferenciasGuardadas()
 
+// El panel de administración va en un fragmento aparte: quien no es administrador nunca lo descarga.
+const PanelAdmin = lazy(() => import('./paginas/admin'))
+
 function Espera() {
   return (
     <div className="grid min-h-dvh place-items-center" aria-busy="true">
@@ -46,6 +49,19 @@ function Privada() {
   if (usuario === undefined) return <Espera />
   if (usuario === null) return <Navigate to="/login" replace state={{ desde: pathname + search }} />
   return <Marco />
+}
+
+/** Panel de administración: con sesión, en su propio marco (no el de las finanzas). */
+function PrivadaAdmin() {
+  const { usuario } = useSesion()
+  const { pathname, search } = useLocation()
+  if (usuario === undefined) return <Espera />
+  if (usuario === null) return <Navigate to="/login" replace state={{ desde: pathname + search }} />
+  return (
+    <Suspense fallback={<Espera />}>
+      <PanelAdmin />
+    </Suspense>
+  )
 }
 
 /** Login/registro: quien ya tiene sesión va a /inicio. */
@@ -69,6 +85,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/registro" element={<Publica><Registro /></Publica>} />
                 <Route path="/recuperar" element={<Publica><Recuperar /></Publica>} />
                 <Route path="/restablecer" element={<Publica><Restablecer /></Publica>} />
+                <Route path="/admin/*" element={<PrivadaAdmin />} />
                 <Route element={<Privada />}>
                   <Route path="/inicio" element={<Inicio />} />
                   <Route path="/movimientos" element={<Movimientos />} />

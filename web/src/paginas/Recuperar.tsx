@@ -19,7 +19,7 @@ export default function Recuperar() {
   return (
     <MarcoAuth
       titulo="Recuperar contraseña"
-      subtitulo="Generamos un PIN de 6 dígitos. Quien administra Hicotea te lo dará; vence en 15 minutos."
+      subtitulo="Te enviamos un PIN de 6 dígitos al correo de tu cuenta. Si no registraste correo, pídeselo a quien administra Hicotea. Vence en 15 minutos."
       pie={
         <Link to="/login" className="hover:text-texto hover:underline">
           Volver a iniciar sesión
@@ -27,8 +27,8 @@ export default function Recuperar() {
       }
     >
       <form onSubmit={alEnviar} className="space-y-4">
-        <Campo etiqueta="Usuario">
-          <Entrada value={usuario} onChange={(e) => setUsuario(e.target.value)} autoComplete="username" autoCapitalize="none" required />
+        <Campo etiqueta="Usuario o correo">
+          <Entrada value={usuario} onChange={(e) => setUsuario(e.target.value)} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={254} required />
         </Campo>
         <AlertaError mensaje={error} />
         <Boton type="submit" className="w-full" cargando={enviando}>

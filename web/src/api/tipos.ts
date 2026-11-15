@@ -11,10 +11,14 @@ export type Frecuencia = 'DIARIA' | 'SEMANAL' | 'QUINCENAL' | 'MENSUAL'
 export type PropositoCajita = 'CAPITAL' | 'COMPRAS' | 'EMERGENCIA' | 'LIBRE'
 export type Periodicidad = 'SEMANAL' | 'QUINCENAL' | 'MENSUAL' | 'ANUAL'
 
+export type Rol = 'USUARIO' | 'ADMIN'
+
 export type Usuario = {
   id: number
   nombre_usuario: string
   nombre_completo: string
+  correo: string | null
+  rol: Rol
   fecha_registro: string
 }
 
@@ -283,4 +287,59 @@ export type FiltroMovimientos = {
   id_categoria?: number
   id_fuente?: number
   pagina?: number
+}
+
+// ------------------------------------------------------------------ administración (espejo de esquemas/admin.py)
+// Ninguno de estos tipos lleva datos financieros.
+
+export type Pagina<T> = { elementos: T[]; pagina: number; total: number; hay_anterior: boolean; hay_siguiente: boolean }
+
+export type EstadoInvitacion = 'PENDIENTE' | 'USADA' | 'EXPIRADA' | 'REVOCADA'
+
+export type CuentaAdmin = {
+  id: number
+  nombre_usuario: string
+  nombre_completo: string
+  correo: string | null
+  rol: Rol
+  activo: boolean
+  bloqueado_en: string | null
+  fecha_registro: string
+  ultimo_ingreso_en: string | null
+  sesiones_activas: number
+}
+
+export type InvitacionAdmin = {
+  id: number
+  correo: string | null
+  nota: string | null
+  estado: EstadoInvitacion
+  creada_en: string
+  expira_en: string
+  usada_en: string | null
+  revocada_en: string | null
+  creada_por: string | null
+  usada_por: string | null
+  revocada_por: string | null
+}
+
+/** Solo en la respuesta de creación: el enlace no se puede volver a consultar. */
+export type InvitacionCreada = InvitacionAdmin & { enlace: string }
+
+export type EventoAuditoria = {
+  id: number
+  fecha: string
+  admin_nombre: string
+  accion: string
+  recurso_tipo: string
+  recurso_id: number | null
+  recurso_nombre: string | null
+  resultado: 'EXITO' | 'RECHAZADO'
+  detalle: string | null
+}
+
+export type ResumenAdmin = {
+  cuentas: { total: number; activas: number; bloqueadas: number; administradores: number }
+  invitaciones: Record<EstadoInvitacion, number>
+  actividad_reciente: EventoAuditoria[]
 }

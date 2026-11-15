@@ -38,13 +38,13 @@ export default function Restablecer() {
     >
       <form onSubmit={alEnviar} className="space-y-4">
         <AlertaExito mensaje={estado?.mensaje ?? null} />
-        <Campo etiqueta="Usuario" error={errores.nombre_usuario}>
-          <Entrada {...campo('nombre_usuario')} autoComplete="username" autoCapitalize="none" required />
+        <Campo etiqueta="Usuario o correo" error={errores.nombre_usuario} ayuda="El mismo que usaste para pedir el PIN.">
+          <Entrada {...campo('nombre_usuario')} autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={254} required />
         </Campo>
         <Campo etiqueta="PIN" error={errores.pin}>
           <Entrada {...campo('pin')} inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} className="cifra tracking-[0.4em]" required />
         </Campo>
-        <Campo etiqueta="Contraseña nueva" error={errores.contrasena} ayuda="Mínimo 8 caracteres.">
+        <Campo etiqueta="Contraseña nueva" error={errores.contrasena} ayuda="Mínimo 8 caracteres. Al cambiarla se cierran tus sesiones abiertas.">
           <Entrada {...campo('contrasena')} type="password" autoComplete="new-password" minLength={8} required />
         </Campo>
         <Campo etiqueta="Repite la contraseña" error={errores.confirmacion_contrasena}>
