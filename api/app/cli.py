@@ -4,6 +4,9 @@
     uv run python -m app.cli admin otorgar <usuario>
     uv run python -m app.cli admin revocar <usuario>
     uv run python -m app.cli invitacion crear [--dias 7] [--correo x@y.co] [--nota "Para Ana"]
+    uv run python -m app.cli correo estado
+    uv run python -m app.cli correo probar <direccion> [--si]
+    uv run python -m app.cli correo vista-previa <carpeta>
 
 En producción, dentro del contenedor de la API:
     docker compose -f docker-compose.prod.yml exec api python -m app.cli admin otorgar <usuario>
@@ -15,8 +18,13 @@ queda en `auditoria_admin` con el autor "cli:<usuario del sistema>".
 
 import argparse
 import getpass
+import os
 import sys
+from datetime import UTC, datetime, timedelta
 
+from app import correo
+from app import plantillas_correo as plantillas
+from app.config import config
 from app.db import motor
 from app.repos import admin as repo
 from app.servicios import invitaciones
@@ -84,6 +92,90 @@ def invitacion_crear(dias: int, correo: str | None, nota: str | None) -> int:
     return 0
 
 
+# ====================================================================== correo
+
+
+def correo_estado() -> int:
+    """Muestra la configuración de envío sin revelar secretos."""
+    c = config()
+    print(f"Modo:          {c.correo_modo}")
+    print(f"Remitente:     {c.correo_remitente}")
+    print(f"URL pública:   {c.url_publica}")
+    if c.correo_modo == "smtp":
+        print(f"Host:          {c.smtp_host or '(vacío)'}")
+        print(f"Puerto:        {c.smtp_puerto}")
+        print(f"Seguridad:     {c.smtp_seguridad}")
+        print(f"Usuario:       {'definido' if c.smtp_usuario else '(vacío)'}")
+        print(f"Contraseña:    {'definida' if c.smtp_contrasena and c.smtp_contrasena.get_secret_value() else '(vacía)'}")
+        print(f"Tiempo límite: {c.smtp_timeout:g} s")
+        for problema in correo.problemas_smtp(c):
+            print(f"  ✗ {problema}")
+        for aviso in correo.avisos_smtp(c):
+            print(f"  ! {aviso}")
+    print()
+    if correo.disponible():
+        print("Disponible: sí. La verificación de correo y el PIN por correo están habilitados.")
+        return 0
+    print("Disponible: no. Hicotea no ofrece verificar correos y el PIN queda en el log del servidor.")
+    return 1
+
+
+def correo_probar(direccion: str, confirmado: bool) -> int:
+    """Envía un correo de prueba (sin datos de cuentas) a una dirección explícita."""
+    direccion = direccion.strip()
+    if "@" not in direccion or any(ch in direccion for ch in "\r\n,; <>"):
+        print("Escribe una sola dirección de correo válida.", file=sys.stderr)
+        return 2
+    c = config()
+    if not correo.disponible():
+        print("El correo no está disponible con la configuración actual:", file=sys.stderr)
+        for problema in correo.problemas_smtp(c) if c.correo_modo == "smtp" else [f"HICOTEA_CORREO_MODO={c.correo_modo}."]:
+            print(f"  ✗ {problema}", file=sys.stderr)
+        return 1
+    destino = "se escribirá en el log (modo consola)" if c.correo_modo == "consola" else f"saldrá por {c.smtp_host}:{c.smtp_puerto} ({c.smtp_seguridad})"
+    print(f"Se enviará un correo de prueba a {direccion}; {destino}.")
+    if not confirmado:
+        if not sys.stdin.isatty():
+            print("Sin terminal interactiva: confirma con --si.", file=sys.stderr)
+            return 2
+        if input("¿Enviar? Escribe 'si' para continuar: ").strip().lower() not in ("si", "sí"):
+            print("Cancelado. No se envió nada.")
+            return 1
+    try:
+        correo.enviar_o_fallar(plantillas.prueba().para(direccion))
+    except Exception as e:  # noqa: BLE001 — se explica sin el detalle del servidor
+        print(f"No se pudo enviar. {correo.describir_error(e)}", file=sys.stderr)
+        return 1
+    print("Enviado. El servidor lo aceptó; revisa la bandeja de entrada y la carpeta de spam.")
+    return 0
+
+
+def correo_vista_previa(carpeta: str) -> int:
+    """Escribe cada plantilla (.html, .txt y .eml) con datos ficticios."""
+    os.makedirs(carpeta, exist_ok=True)
+    base = config().url_publica.rstrip("/")
+    falso = "TOKEN-FICTICIO-de-vista-previa-0000000000"
+    nombre = "Ana <Prueba> & Cía"  # muestra el escape
+    muestras = {
+        "verificacion": plantillas.verificacion(nombre, "ana", f"{base}/verificar-correo?token={falso}", 24),
+        "recuperacion-pin": plantillas.recuperacion_pin(nombre, "ana", "042917", 15, 5),
+        "invitacion": plantillas.invitacion(f"{base}/registro?invitacion={falso}",
+                                            datetime.now(UTC) + timedelta(days=7), "Para Ana, de parte de Rosa."),
+        "aviso-contrasena": plantillas.aviso_contrasena_cambiada(nombre, "ana", desde_perfil=True),
+        "aviso-correo": plantillas.aviso_correo_cambiado(nombre, "ana", "ana.nueva@ejemplo.co"),
+        "prueba": plantillas.prueba(),
+    }
+    for clave, m in muestras.items():
+        with open(os.path.join(carpeta, f"{clave}.html"), "w", encoding="utf-8") as f:
+            f.write(m.html)
+        with open(os.path.join(carpeta, f"{clave}.txt"), "w", encoding="utf-8") as f:
+            f.write(f"Asunto: {m.asunto}\n\n{m.texto}\n")
+        with open(os.path.join(carpeta, f"{clave}.eml"), "wb") as f:
+            f.write(bytes(correo.componer(m.para("ana@ejemplo.co"), "Hicotea <no-responder@ejemplo.co>")))
+    print(f"{len(muestras)} plantillas en {carpeta} (.html, .txt y .eml, datos ficticios).")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="python -m app.cli", description="Operación de Hicotea")
     sub = p.add_subparsers(dest="grupo", required=True)
@@ -102,7 +194,22 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--correo")
     c.add_argument("--nota")
 
+    co = sub.add_parser("correo", help="Envío de correos")
+    sco = co.add_subparsers(dest="accion", required=True)
+    sco.add_parser("estado", help="Configuración actual, sin secretos")
+    pr = sco.add_parser("probar", help="Envía un correo de prueba a una dirección explícita")
+    pr.add_argument("direccion")
+    pr.add_argument("--si", action="store_true", help="No pedir confirmación")
+    vp = sco.add_parser("vista-previa", help="Escribe las plantillas con datos ficticios")
+    vp.add_argument("carpeta")
+
     args = p.parse_args(argv)
+    if args.grupo == "correo":
+        if args.accion == "estado":
+            return correo_estado()
+        if args.accion == "probar":
+            return correo_probar(args.direccion, args.si)
+        return correo_vista_previa(args.carpeta)
     if args.grupo == "admin":
         if args.accion == "listar":
             return admin_listar()

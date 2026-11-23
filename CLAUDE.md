@@ -56,6 +56,7 @@ Tablas: `usuario` (con `rol`, `correo`, `bloqueado_en`, `ultimo_ingreso_en` desd
 | Módulo | Pantallas | Lógica clave a preservar |
 |---|---|---|
 | Auth | login, registro (por invitación `?invitacion=`), recuperar, restablecer | PIN de recuperación con expiración, solo a un correo **verificado** (`app/correo.py`), límites por IP |
+| **Correo** (transversal) | — | `app/correo.py` (transportes, `disponible()` solo si SMTP está completo) y `app/plantillas_correo.py` (texto + HTML, todo escapado, sin recursos externos); CLI `app.cli correo estado\|probar\|vista-previa`. Ver `docs/correo-transaccional.md` |
 | **Perfil** (`/perfil`, `/verificar-correo`) | cuenta, correo, seguridad, apariencia | `/api/cuenta/*`; correo y contraseña piden la contraseña actual; enlace de verificación de un solo uso (SHA-256, 24 h). Ver `docs/perfil-y-verificacion-correo.md` |
 | **Administración** (`/admin`, marco propio, carga diferida) | resumen, usuarios, invitaciones, auditoría | `AdminActual` en `/api/admin/*` (403 si no es ADMIN); bloqueo real; nunca datos financieros. Primer admin: `python -m app.cli admin otorgar`. Ver `docs/administracion-y-recuperacion.md` |
 | Tablero (inicio) | resumen, gráficas, botones rápidos | `Tablero`, `ResumenSaldo`, `ResumenPeriodo`, totales por categoría/día/mes |

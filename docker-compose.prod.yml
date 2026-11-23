@@ -35,7 +35,8 @@ services:
       HICOTEA_COOKIE_SECURE: "true"
       HICOTEA_ORIGENES_PERMITIDOS: '["https://hicotea.duckdns.org"]'
       HICOTEA_URL_PUBLICA: https://hicotea.duckdns.org
-      # Correo para el PIN de recuperación (docs/administracion-y-recuperacion.md). "ninguno" = PIN en el log.
+      # Correo: verificación, PIN y avisos (docs/correo-transaccional.md). "ninguno" = PIN en el log.
+      # SMTP incompleto = correo deshabilitado; revisa con: exec api python -m app.cli correo estado
       HICOTEA_CORREO_MODO: ${HICOTEA_CORREO_MODO:-ninguno}
       HICOTEA_CORREO_REMITENTE: ${HICOTEA_CORREO_REMITENTE:-Hicotea <no-responder@hicotea.duckdns.org>}
       HICOTEA_SMTP_HOST: ${HICOTEA_SMTP_HOST:-}
@@ -43,6 +44,7 @@ services:
       HICOTEA_SMTP_USUARIO: ${HICOTEA_SMTP_USUARIO:-}
       HICOTEA_SMTP_CONTRASENA: ${HICOTEA_SMTP_CONTRASENA:-}
       HICOTEA_SMTP_SEGURIDAD: ${HICOTEA_SMTP_SEGURIDAD:-starttls}
+      HICOTEA_SMTP_TIMEOUT: ${HICOTEA_SMTP_TIMEOUT:-15}
     depends_on:
       db:
         condition: service_healthy

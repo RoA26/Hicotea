@@ -16,6 +16,7 @@ from urllib.parse import quote
 from sqlalchemy import Connection
 
 from app import correo
+from app import plantillas_correo as plantillas
 from app.config import config
 from app.repos import verificacion as repo
 from app.seguridad.sesion import hash_token, nuevo_token
@@ -37,18 +38,8 @@ def enviar_enlace(con: Connection, usuario: dict, direccion: str) -> bool:
     repo.anular_pendientes(con, usuario["id"])
     token = nuevo_token()
     repo.crear(con, usuario["id"], direccion, hash_token(token), timedelta(hours=HORAS_VIGENCIA))
-    enviado = correo.enviar(correo.Correo(
-        para=direccion,
-        asunto="Confirma tu correo en Hicotea",
-        texto=(
-            f"Hola, {usuario['nombre_completo']}.\n\n"
-            f"Para usar esta dirección en tu cuenta de Hicotea ({usuario['nombre_usuario']}), abre este enlace:\n\n"
-            f"{enlace(token)}\n\n"
-            f"Vence en {HORAS_VIGENCIA} horas y sirve una sola vez. Mientras no lo abras, "
-            "esta dirección no recibirá el PIN de recuperación.\n\n"
-            "Si no lo pediste, ignora este correo: nada cambia."
-        ),
-    ))
+    mensaje = plantillas.verificacion(usuario["nombre_completo"], usuario["nombre_usuario"], enlace(token), HORAS_VIGENCIA)
+    enviado = correo.enviar(mensaje.para(direccion))
     if enviado:
         log.info("Enlace de verificación de correo enviado al usuario id=%s.", usuario["id"])
     return enviado

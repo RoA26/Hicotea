@@ -95,7 +95,8 @@ verificar (503 `CORREO_NO_CONFIGURADO`). No se escribe el enlace en el log: veri
 demostrar acceso al buzón, y un enlace entregado por quien administra no lo demostraría.
 
 **Configuración externa pendiente para producción**: credenciales SMTP reales (`HICOTEA_CORREO_MODO=smtp`
-y `HICOTEA_SMTP_*`, ver `administracion-y-recuperacion.md §5`). `HICOTEA_URL_PUBLICA` ya está en
+y `HICOTEA_SMTP_*`, ver `correo-transaccional.md §3–5`). Desde la fase 3A, un SMTP incompleto cuenta como
+"sin transporte" (503 `CORREO_NO_CONFIGURADO`), y los correos llevan HTML además del texto. `HICOTEA_URL_PUBLICA` ya está en
 `docker-compose.prod.yml`. Recomendado: SPF/DKIM del dominio remitente para que los enlaces no caigan en spam.
 
 ## 4. Refinamientos de UX (2026-11-14)

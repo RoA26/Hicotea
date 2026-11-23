@@ -3,11 +3,10 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app import correo
 from app.config import config
 from app.errores import registrar_manejadores
 from app.rutas import admin, ahorro, auth, catalogos, compartir, cuenta, movimientos
-
-config()  # falla al arrancar si la configuración es inválida
 
 # Logs propios de la app (p. ej. el PIN de recuperación) en la consola del servidor.
 _log = logging.getLogger("hicotea")
@@ -17,6 +16,9 @@ if not _log.handlers:
     _log.addHandler(_manejador)
     _log.setLevel(logging.INFO)
     _log.propagate = False
+
+config()  # falla al arrancar si la configuración es inválida
+correo.revisar_al_arrancar()  # explica en el log (sin secretos) si el correo no podrá salir
 
 app = FastAPI(title="Hicotea API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 registrar_manejadores(app)

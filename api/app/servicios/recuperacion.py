@@ -1,8 +1,9 @@
 """"Olvidé mi contraseña" con PIN de 6 dígitos.
 
 Entrega del PIN:
- - Si la cuenta tiene correo y hay transporte de correo (`HICOTEA_CORREO_MODO`
-   = "smtp" o "consola"), se envía por correo y **no** se escribe en el log.
+ - Si la cuenta tiene correo **verificado** y hay transporte de correo utilizable
+   (`HICOTEA_CORREO_MODO` = "smtp" completo o "consola"), se envía por correo
+   (plantilla `plantillas_correo.recuperacion_pin`) y **no** se escribe en el log.
  - Si no, se escribe en el log del servidor para que quien administra se lo
    entregue por un canal verificado (comportamiento previo).
 
@@ -21,6 +22,7 @@ import secrets
 from sqlalchemy import Connection
 
 from app import correo
+from app import plantillas_correo as plantillas
 from app.errores import ReglaNegocio
 from app.repos import otros as repo
 from app.repos import sesion as repo_sesion
@@ -66,17 +68,8 @@ def solicitar(con: Connection, identificador: str) -> None:
 
     # Solo a un correo verificado: uno sin verificar podría no ser de la persona.
     if usuario.get("correo") and usuario.get("correo_verificado") and correo.disponible():
-        enviado = correo.enviar(correo.Correo(
-            para=usuario["correo"],
-            asunto="Tu PIN para restablecer la contraseña de Hicotea",
-            texto=(
-                f"Hola, {usuario['nombre_completo']}.\n\n"
-                f"Tu PIN es: {pin}\n\n"
-                f"Escríbelo en Hicotea junto con tu usuario ({nombre}) para elegir una contraseña nueva. "
-                f"Vence en {MINUTOS_VIGENCIA} minutos y admite {MAXIMO_INTENTOS} intentos.\n\n"
-                "Si no lo pediste, ignora este correo: tu contraseña no cambia."
-            ),
-        ))
+        mensaje = plantillas.recuperacion_pin(usuario["nombre_completo"], nombre, pin, MINUTOS_VIGENCIA, MAXIMO_INTENTOS)
+        enviado = correo.enviar(mensaje.para(usuario["correo"]))
         if enviado:
             log.info("PIN de recuperación enviado por correo al usuario id=%s.", usuario["id"])
             return
@@ -121,12 +114,5 @@ def restablecer(con: Connection, identificador: str, pin: str, contrasena: str, 
     repo_sesion.borrar_todas(con, usuario["id"])
     log.info("Contraseña restablecida para el usuario id=%s.", usuario["id"])
     if usuario.get("correo") and usuario.get("correo_verificado"):
-        correo.enviar(correo.Correo(
-            para=usuario["correo"],
-            asunto="Tu contraseña de Hicotea cambió",
-            texto=(
-                f"Hola, {usuario['nombre_completo']}.\n\n"
-                "La contraseña de tu cuenta de Hicotea se acaba de cambiar y se cerraron todas tus sesiones.\n"
-                "Si no fuiste tú, avisa de inmediato a quien administra Hicotea."
-            ),
-        ))
+        aviso = plantillas.aviso_contrasena_cambiada(usuario["nombre_completo"], usuario["nombre_usuario"], desde_perfil=False)
+        correo.enviar(aviso.para(usuario["correo"]))

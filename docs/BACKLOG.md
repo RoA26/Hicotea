@@ -24,7 +24,8 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 | **Design System + Natura** | Cuatro ejes, tokens de forma, tipo, movimiento y series, Natura (8 combinaciones AA) | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§1–3` |
 | **Calendario vivo** | C-01…C-07 completos, distribución 70/30 | ✅ Commit (`37cb47d`); pendiente revisión visual | Claude Code | `§5–6` |
 | **Móvil + Admin** | Barra inferior, tablero con divulgación progresiva, invitaciones, panel `/admin`, bloqueo, auditoría, recuperación por correo | ✅ Commit (`181396c`…`cab78cb`); admin validado a mano, falta celular real | Claude Code | `docs/administracion-y-recuperacion.md`, migración 0010 |
-| **Perfil + Correo + Recurrentes** | `/perfil`, verificación de correo (0011), `RECURRENTE_AVANZO`, barra oculta con teclado | 🚀 **Implementado, pendiente de commit y validación** | Claude Code | `docs/perfil-y-verificacion-correo.md`, migración 0011 |
+| **Perfil + Correo + Recurrentes** | `/perfil`, verificación de correo (0011), `RECURRENTE_AVANZO`, barra oculta con teclado | ✅ Commit (`ba67a46`…`67629b5`); falta celular real | Claude Code | `docs/perfil-y-verificacion-correo.md`, migración 0011 |
+| **3A Correo transaccional** | HTML + texto, plantillas Original, SMTP validado, CLI de prueba, guía de Resend | 🚀 **Implementado, pendiente de commit**; sin envío real | Claude Code | `docs/correo-transaccional.md` |
 
 ---
 
@@ -39,6 +40,9 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 - **Móvil + administración + invitaciones + recuperación por correo**, migración 0010 (`181396c`, `2ed121f`, `42b4709`, `ee50451`, `cab78cb`). El panel admin ya se probó a mano. Nota: `42b4709` no compila por sí solo (usa `usuario.rol`, que llega en `ee50451`); el estado final sí.
 
 ### 2. Implementado, pendiente de commit
+- **Fase 3A, correo transaccional**: `Correo.html` opcional (multipart/alternative), `app/plantillas_correo.py` (verificación, PIN y avisos de seguridad integrados; invitación preparada), `disponible()` False con SMTP incompleto, `SecretStr`, `HICOTEA_SMTP_TIMEOUT`, `app.cli correo estado|probar|vista-previa`. 224 pruebas (54 nuevas).
+
+### 2b. Consolidado en la sesión de perfil (commits `ba67a46`…`67629b5`)
 - **Integridad de recurrentes**: `ocurrencia` obligatoria al confirmar u omitir; 409 `RECURRENTE_AVANZO` y avance condicional. Ya no hay movimientos duplicados por doble toque, reintento u otra pestaña.
 - **Perfil** `/perfil`: cuenta (nombre editable), correo, seguridad (cambiar contraseña, cerrar las demás sesiones) y apariencia con muestras de color.
 - **Verificación de correo** (migración **0011**): enlace de un solo uso (SHA-256, 24 h), reautenticación, sin enumeración, PIN solo a correo verificado.
@@ -54,7 +58,8 @@ Documento maestro de seguimiento, planificación y registro de decisiones para l
 - [ ] Decidir `--aviso` en Original claro (3,19:1, heredado del kit).
 
 ### 4. Pendiente de configuración externa
-- [ ] **SMTP real** (proveedor, remitente, dominio con SPF/DKIM). Sin él, en producción no se pueden verificar correos y el PIN sigue en el log.
+- [ ] **SMTP real**: dominio propio verificado en Resend (SPF/DKIM), API key de solo envío en `.env.prod`, `correo estado` y `correo probar` a una dirección propia (`docs/correo-transaccional.md §5`). Sin él, en producción no se pueden verificar correos y el PIN sigue en el log.
+- [ ] Revisar los correos de prueba en Gmail, Outlook y un cliente móvil (solo se vieron en Chromium).
 - [ ] Al desplegar: `alembic upgrade head` (0009 → 0011) en producción y `app.cli admin otorgar <usuario>` dentro del contenedor.
 - [ ] Decidir cuándo vaciar `HICOTEA_CODIGO_INVITACION` en `.env.prod`.
 

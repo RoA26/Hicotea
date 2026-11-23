@@ -123,7 +123,7 @@ uso y cierre de sesiones) y se completa:
 |---|---|
 | `ninguno` (por defecto) | No envía. El PIN queda en el log (comportamiento previo). |
 | `consola` | Escribe el correo completo en el log. **Solo desarrollo.** |
-| `smtp` | Envío real con `smtplib`. |
+| `smtp` | Envío real con `smtplib`. Si la configuración está incompleta, equivale a `ninguno` (fase 3A). |
 
 Variables para `smtp` (no hay valores inventados; consíguelas de tu proveedor):
 
@@ -135,7 +135,11 @@ HICOTEA_SMTP_PUERTO=587            # 465 con SMTP_SEGURIDAD=ssl
 HICOTEA_SMTP_USUARIO=...
 HICOTEA_SMTP_CONTRASENA=...        # secreto: solo en .env.prod (chmod 600)
 HICOTEA_SMTP_SEGURIDAD=starttls    # starttls | ssl | ninguna
+HICOTEA_SMTP_TIMEOUT=15            # segundos
 ```
+
+Plantillas HTML, validación de la configuración, `app.cli correo estado|probar|vista-previa` y los pasos
+para Resend: **`docs/correo-transaccional.md`**.
 
 Un fallo del servidor de correo no rompe la solicitud: se registra el tipo de error (sin el contenido)
 y el PIN queda en el log para quien administra. Las pruebas usan `correo.BuzonMemoria`.
@@ -155,7 +159,7 @@ Los usuarios existentes no tienen correo. Desde 0011 lo agregan, cambian y verif
 ## 7. Riesgos y pendientes
 
 - Los limitadores viven en memoria (un worker): se reinician al reiniciar la API. Es suficiente para una sola instancia.
-- Si el envío por SMTP tarda, la petición de recuperación espera hasta 15 s (envío síncrono).
+- Si el envío por SMTP tarda, la petición de recuperación espera hasta `HICOTEA_SMTP_TIMEOUT` (15 s; envío síncrono).
 - Resuelto en 0011: el correo del registro queda sin verificar hasta abrir el enlace, y solo uno verificado recibe el PIN.
 - No hay gestión de roles desde el panel (a propósito): dar o quitar el rol solo se hace por CLI.
 - No hay "sesiones por dispositivo"; cerrar sesiones las cierra todas.

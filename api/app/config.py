@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,17 +29,19 @@ class Config(BaseSettings):
     # Vigencia por defecto de una invitación nueva (el administrador la puede cambiar al crearla).
     invitacion_dias: int = Field(default=7, ge=1, le=30)
 
-    # Entrega de correos (PIN de recuperación):
+    # Entrega de correos (verificación, PIN de recuperación, avisos). Ver docs/correo-transaccional.md.
     #  - "ninguno": no se envía nada; el PIN queda en el log para quien administra (comportamiento previo).
-    #  - "consola": el correo completo se escribe en el log (desarrollo).
-    #  - "smtp":    se envía de verdad con las credenciales smtp_*.
+    #  - "consola": el correo completo se escribe en el log (solo desarrollo).
+    #  - "smtp":    se envía de verdad con las credenciales smtp_*. Si la configuración está
+    #               incompleta, `correo.disponible()` es False (equivale a "ninguno").
     correo_modo: Literal["ninguno", "consola", "smtp"] = "ninguno"
     correo_remitente: str = "Hicotea <no-responder@localhost>"
     smtp_host: str | None = None
-    smtp_puerto: int = 587
+    smtp_puerto: int = Field(default=587, ge=1, le=65535)
     smtp_usuario: str | None = None
-    smtp_contrasena: str | None = None
+    smtp_contrasena: SecretStr | None = None
     smtp_seguridad: Literal["starttls", "ssl", "ninguna"] = "starttls"
+    smtp_timeout: float = Field(default=15, ge=1, le=60)
 
     @property
     def codigo_heredado(self) -> str | None:

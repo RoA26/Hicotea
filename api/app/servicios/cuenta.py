@@ -16,6 +16,7 @@ from sqlalchemy import Connection
 from sqlalchemy.exc import IntegrityError
 
 from app import correo
+from app import plantillas_correo as plantillas
 from app.errores import ReglaNegocio
 from app.repos import otros as repo_otros
 from app.repos import sesion as repo_sesion
@@ -131,16 +132,7 @@ def verificar(con: Connection, token: str) -> dict:
     repo_otros.recuperacion_anular_pendientes(con, u["id"])
     log.info("Correo verificado para el usuario id=%s.", u["id"])
     if anterior and anterior.lower() != direccion.lower():
-        correo.enviar(correo.Correo(
-            para=anterior,
-            asunto="El correo de tu cuenta de Hicotea cambió",
-            texto=(
-                f"Hola, {u['nombre_completo']}.\n\n"
-                f"El correo de tu cuenta de Hicotea ({u['nombre_usuario']}) ahora es {direccion}. "
-                "Desde ahora el PIN de recuperación llegará allí.\n\n"
-                "Si no fuiste tú, avisa de inmediato a quien administra Hicotea."
-            ),
-        ))
+        correo.enviar(plantillas.aviso_correo_cambiado(u["nombre_completo"], u["nombre_usuario"], direccion).para(anterior))
     return {"mensaje": f"Listo. {direccion} quedó verificado en tu cuenta.", "correo": direccion}
 
 
@@ -160,15 +152,8 @@ def cambiar_contrasena(
     repo_otros.recuperacion_anular_pendientes(con, usuario["id"])
     log.info("Contraseña cambiada desde el perfil por el usuario id=%s.", usuario["id"])
     if usuario.get("correo") and usuario.get("correo_verificado"):
-        correo.enviar(correo.Correo(
-            para=usuario["correo"],
-            asunto="Tu contraseña de Hicotea cambió",
-            texto=(
-                f"Hola, {usuario['nombre_completo']}.\n\n"
-                "La contraseña de tu cuenta de Hicotea se cambió desde tu perfil y se cerraron tus otras sesiones.\n"
-                "Si no fuiste tú, avisa de inmediato a quien administra Hicotea."
-            ),
-        ))
+        aviso = plantillas.aviso_contrasena_cambiada(usuario["nombre_completo"], usuario["nombre_usuario"], desde_perfil=True)
+        correo.enviar(aviso.para(usuario["correo"]))
     return cerradas
 
 
